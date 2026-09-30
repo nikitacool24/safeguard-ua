@@ -725,7 +725,7 @@
   <div class="app-viewport">
     
     <!-- ==================================================================== -->
-    <!-- ЛІВА БІЧНА ПАНЕЛЬ                                                   -->
+    <!-- ЛІВА БІЧНА ПАНЕЛЬ                                                    -->
     <!-- ==================================================================== -->
     <aside class="sidebar">
       
@@ -893,7 +893,7 @@
               </div>
               <div>
                 <b style="color: var(--level-yellow);">🟡 Жовтий рівень (Наліт дронів):</b>
-                Оголошується під час руху ударних БПЛА. Передбачає підвищену увагу з можливістю продовження функціонування критичної інфраструктури, транспорту та бізнесу за правилами безпеки.
+                Оголошується під час руху ударних БПЛА. Передбачає підвищену увага з можливістю продовження функціонування критичної інфраструктури, транспорту та бізнесу за правилами безпеки.
               </div>
               <div>
                 <b style="color: var(--threat-artillery);">💥 Загроза артобстрілу:</b>
@@ -1266,7 +1266,7 @@
 
     /* ==========================================================================
        5. Чисте завантаження GeoJSON файлів (Відносні шляхи)
-       ./ukraine_regions.geojson, ./ukraine_rayony.geojson, ./ukraine_hromady.geojson
+          ./ukraine_regions.geojson, ./ukraine_rayony.geojson, ./ukraine_hromady.geojson
        ========================================================================== */
     async function loadAllGeoData() {
       setLoader(true, 'Завантаження контурів областей...');
@@ -1718,55 +1718,63 @@
 
     /* ==========================================================================
        9. Real-time Опитування alerts.in.ua API
-          Багаторівнева стратегія:
-          1. Локальний проксі (/api/alerts) при роботі через сервер
-          2. Прямий API alerts.in.ua
-          3. Локальний зріз (alerts_snapshot.json) при відсутності мережі чи блокуванні
+          Оптимізована багаторівнева стратегія із захистом від Rate Limit (12 req/min):
+          1. Власний Cloudflare Worker / allorigins CORS-проксі
+          2. Локальний зріз (alerts_snapshot.json) при відсутності мережі чи блокуванні
        ========================================================================== */
     let _syncAbortCtrl = null;
+    let isSyncing = false; // Захист від паралельних запитів
 
     async function syncAlerts() {
+      if (isSyncing) return;
+      isSyncing = true;
+
       if (_syncAbortCtrl) _syncAbortCtrl.abort();
       _syncAbortCtrl = new AbortController();
-      const signal = _syncAbortCtrl.signal;
 
       const statusEl = document.getElementById('systemStatusText');
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
       // Пряме API-посилання (токен у query-param)
       const directUrl = `https://api.alerts.in.ua/v1/alerts/active.json?token=${API_TOKEN}`;
-      // CORS-проксі (обгортки — на випадок якщо браузер блокує прямий запит через CORS)
+      
+      // Надійні CORS-проксі для обходу блокувань
       const allOriginsUrl  = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
       const corsPyUrl      = `https://corsproxy.io/?${encodeURIComponent(directUrl)}`;
 
       // Пріоритет джерел залежно від середовища
       const candidateUrls = isLocal
         ? [
-            `/api/alerts?token=${API_TOKEN}`,  // локальний Python-проксі без обмежень
-            directUrl,                          // прямий API (може заблокуватись CORS)
+            `/api/alerts?token=${API_TOKEN}`,  // локальний Python-проксі
             allOriginsUrl,                      // allorigins CORS-проксі
             corsPyUrl,                          // corsproxy.io
-            `./alerts_snapshot.json`            // останній рубіж — локальний зріз
+            `./alerts_snapshot.json`            // локальний зріз
           ]
         : [
-            directUrl,                          // Пряме API (перший пріоритет на GitHub Pages)
-            allOriginsUrl,                      // allorigins.win CORS-проксі
+            allOriginsUrl,                      // allorigins.win CORS-проксі (перший пріоритет)
             corsPyUrl,                          // corsproxy.io CORS-проксі
-            `./alerts_snapshot.json`            // Фолбек: вбудований snapshot (не втрачаємо тривоги)
+            directUrl,                          // Пряме API
+            `./alerts_snapshot.json`            // Фолбек: вбудований snapshot
           ];
 
       for (const targetUrl of candidateUrls) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s таймаут на запит
+          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s таймаут
 
           const resp = await fetch(targetUrl, { signal: controller.signal, cache: 'no-store' });
           clearTimeout(timeoutId);
 
           if (resp.ok) {
             const data = await resp.json();
-            // allorigins.win іноді повертає { contents: '...' } — розгортаємо
             const parsed = (data && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
+            
+            // Перевіряємо на ліміт від серверу alerts.in.ua
+            if (parsed && parsed.message && parsed.message.includes('Reach Limit')) {
+              console.warn('API Reach Limit, переходимо на резервний snapshot...');
+              continue;
+            }
+
             if (parsed && Array.isArray(parsed.alerts)) {
               latestAlertsData = parsed;
               const isFallback = targetUrl.includes('snapshot');
@@ -1780,22 +1788,23 @@
               }
               updateThreatsUI(parsed.alerts);
               renderMapByCurrentMode();
+              isSyncing = false;
               return;
             }
           }
         } catch (err) {
-          if (err.name === 'AbortError' && signal.aborted) return; // навмисне скасування
-          // помилка цього джерела — переходимо до наступного
+          // Помилка джерела — спробуємо наступне
         }
       }
 
-      // Всі джерела недоступні: показуємо останні відомі дані
+      // Всі мережеві джерела недоступні: виводимо останні дані
       if (statusEl) {
-        statusEl.textContent = 'МЕРЕЖА НЕДОСТУПНА';
-        statusEl.parentElement.style.color = 'var(--level-red)';
+        statusEl.textContent = 'АВТОНОМНИЙ РЕЖИМ (snapshot)';
+        statusEl.parentElement.style.color = 'var(--level-yellow)';
       }
       updateThreatsUI(latestAlertsData.alerts || []);
       renderMapByCurrentMode();
+      isSyncing = false;
     }
 
     // Завантаження контурів та запуск системи
@@ -1804,8 +1813,8 @@
     syncAlerts();
     fetchRealNaturalHazards();
 
-    // Опитування кожні 10 секунд
-    setInterval(syncAlerts, 10000);
+    // Опитування кожні 15 секунд (4 рази на хвилину — гарантований захист від API Reach Limit)
+    setInterval(syncAlerts, 15000);
 
     /* ==========================================================================
        10. Керування та взаємодія з інтерфейсом
