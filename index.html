@@ -261,9 +261,7 @@ button{ font:inherit; }
       <span id="systemStatus">СИНХРОНІЗАЦІЯ...</span>
     </div>
 
-    <div class="clock" id="clock">
-      00:00:00 (Київ)
-    </div>
+    <div class="clock" id="clock">00:00:00 (Київ)</div>
   </div>
 
   <div class="brand">
@@ -513,14 +511,6 @@ function formatTime(date){
   }).format(new Date(date));
 }
 
-function formatDuration(start){
-  if(!start) return '';
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(start).getTime()) / 1000));
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h ? `${h} год ${m} хв` : `${m} хв`;
-}
-
 function featureName(feature){
   const p = feature?.properties || {};
   return p.name || p.NAME || p.Name || p.region || p.region_name || p.raion || p.raion_name || p.hromada || p.hromada_name || p.title || p.NAME_UA || '';
@@ -532,7 +522,7 @@ function featureOblast(feature){
 }
 
 /* ============================================================
-   MATCHING ALERTS
+   MATCHING ALERTS (ИСПРАВЛЕННАЯ ЛОГИКА)
    ============================================================ */
 
 function getAlertForFeature(feature, geoMode){
@@ -541,20 +531,27 @@ function getAlertForFeature(feature, geoMode){
 
   if(!name) return null;
 
-  // 1. Точное совпадение по названию объекта
+  // 1. Поиск совпадения непосредственно по имени полигона
   let found = alerts.find(a => normalizeName(a.location_title) === name || normalizeName(a.location_raion) === name);
   if(found) return found;
 
-  // 2. Частичное совпадение названий
-  found = alerts.find(a => {
-    const target = normalizeName(a.location_title);
-    return target && (target.includes(name) || name.includes(target));
-  });
-  if(found) return found;
+  // 2. Для областей: закрашивать область ТОЛЬКО если тревога объявлена на ВСЮ область
+  if(geoMode === 'oblast'){
+    found = alerts.find(a => {
+      const locTitle = normalizeName(a.location_title);
+      const isOblastType = a.location_type === 'oblast' || (!a.location_type && !a.location_raion);
+      return locTitle === name && isOblastType;
+    });
+    return found || null;
+  }
 
-  // 3. Если смотрим районы/громады — наследуем тревогу всей области
-  if(geoMode !== 'oblast' && oblName){
-    found = alerts.find(a => normalizeName(a.location_title) === oblName || normalizeName(a.location_oblast) === oblName);
+  // 3. Для районов и громад: если тревога на всю область — подсвечиваем все её районы/громады
+  if((geoMode === 'raion' || geoMode === 'hromada') && oblName){
+    found = alerts.find(a => {
+      const locTitle = normalizeName(a.location_title);
+      const isOblastType = a.location_type === 'oblast' || (!a.location_type && !a.location_raion);
+      return locTitle === oblName && isOblastType;
+    });
   }
 
   return found || null;
@@ -587,12 +584,11 @@ async function renderMap(){
     showLoader(true, `Завантаження ${currentMode}...`);
 
     if(currentMode === 'dynamic'){
-      // 1. Рисуем базовый слой областей
+      // 1. Базовый слой областей (красит только если тревога на ВСЮ область)
       const oblGeo = await loadGeo('oblast');
       const oblLayer = L.geoJSON(oblGeo, {
         style: feature => {
-          const name = normalizeName(featureName(feature));
-          const alert = alerts.find(a => normalizeName(a.location_title) === name || normalizeName(a.location_oblast) === name);
+          const alert = getAlertForFeature(feature, 'oblast');
 
           if(!alert){
             return { color: '#38bdf8', weight: 1.1, opacity: .5, fillColor: '#00d4ff', fillOpacity: .025 };
@@ -606,23 +602,29 @@ async function renderMap(){
           };
         },
         onEachFeature: (feature, layer) => {
-          bindFeatureTooltip(feature, layer);
+          bindFeatureTooltip(feature, layer, 'oblast');
         }
       });
       geoLayer.addLayer(oblLayer);
 
-      // 2. Если есть тревоги в районах/громадах — накладываем их сверху!
-      const localAlerts = alerts.filter(a => a.location_type === 'raion' || a.location_type === 'hromada');
+      // 2. Наложение локальных тревог (громады и районы) поверх базового слоя
+      const localAlerts = alerts.filter(a => a.location_type === 'raion' || a.location_type === 'hromada' || a.location_raion);
       if(localAlerts.length > 0){
         const hromadaGeo = await loadGeo('hromada');
         const overlay = L.geoJSON(hromadaGeo, {
           filter: feature => {
             const name = normalizeName(featureName(feature));
-            return localAlerts.some(a => normalizeName(a.location_title) === name);
+            return localAlerts.some(a => {
+              const locTitle = normalizeName(a.location_title);
+              return locTitle && (locTitle.includes(name) || name.includes(locTitle));
+            });
           },
           style: feature => {
             const name = normalizeName(featureName(feature));
-            const alert = localAlerts.find(a => normalizeName(a.location_title) === name);
+            const alert = localAlerts.find(a => {
+              const locTitle = normalizeName(a.location_title);
+              return locTitle && (locTitle.includes(name) || name.includes(locTitle));
+            });
             const isYellow = alert?.alert_level === 'yellow';
             return {
               color: isYellow ? '#ffd000' : '#ff3045',
@@ -632,14 +634,14 @@ async function renderMap(){
             };
           },
           onEachFeature: (feature, layer) => {
-            bindFeatureTooltip(feature, layer);
+            bindFeatureTooltip(feature, layer, 'hromada');
           }
         });
         overlayLayer.addLayer(overlay);
       }
 
     } else {
-      // Прямой режим: Области, Районы или Громады
+      // Прямой выбор режима (Области, Районы, Громады)
       const geo = await loadGeo(currentMode);
       const layer = L.geoJSON(geo, {
         style: feature => {
@@ -661,7 +663,7 @@ async function renderMap(){
           };
         },
         onEachFeature: (feature, layer) => {
-          bindFeatureTooltip(feature, layer);
+          bindFeatureTooltip(feature, layer, currentMode);
         }
       });
       geoLayer.addLayer(layer);
@@ -674,9 +676,9 @@ async function renderMap(){
   }
 }
 
-function bindFeatureTooltip(feature, layer){
+function bindFeatureTooltip(feature, layer, mode){
   const name = featureName(feature);
-  const alert = getAlertForFeature(feature, currentMode);
+  const alert = getAlertForFeature(feature, mode);
 
   layer.bindTooltip(`
     <strong>${escapeHtml(name)}</strong>
