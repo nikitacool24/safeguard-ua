@@ -1730,46 +1730,69 @@
       _syncAbortCtrl = new AbortController();
       const signal = _syncAbortCtrl.signal;
 
+      const statusEl = document.getElementById('systemStatusText');
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      // Пряме API-посилання (токен у query-param)
+      const directUrl = `https://api.alerts.in.ua/v1/alerts/active.json?token=${API_TOKEN}`;
+      // CORS-проксі (обгортки — на випадок якщо браузер блокує прямий запит через CORS)
+      const allOriginsUrl  = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
+      const corsPyUrl      = `https://corsproxy.io/?${encodeURIComponent(directUrl)}`;
+
+      // Пріоритет джерел залежно від середовища
       const candidateUrls = isLocal
         ? [
-            `/api/alerts?token=${API_TOKEN}`,
-            `https://api.alerts.in.ua/v1/alerts/active.json?token=${API_TOKEN}`,
-            `./alerts_snapshot.json`
+            `/api/alerts?token=${API_TOKEN}`,  // локальний Python-проксі без обмежень
+            directUrl,                          // прямий API (може заблокуватись CORS)
+            allOriginsUrl,                      // allorigins CORS-проксі
+            corsPyUrl,                          // corsproxy.io
+            `./alerts_snapshot.json`            // останній рубіж — локальний зріз
           ]
         : [
-            `https://api.alerts.in.ua/v1/alerts/active.json?token=${API_TOKEN}`,
-            `./alerts_snapshot.json`
+            directUrl,                          // Пряме API (перший пріоритет на GitHub Pages)
+            allOriginsUrl,                      // allorigins.win CORS-проксі
+            corsPyUrl,                          // corsproxy.io CORS-проксі
+            `./alerts_snapshot.json`            // Фолбек: вбудований snapshot (не втрачаємо тривоги)
           ];
-
-      const statusEl = document.getElementById('systemStatusText');
 
       for (const targetUrl of candidateUrls) {
         try {
-          const resp = await fetch(targetUrl, { signal, cache: 'no-store' });
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s таймаут на запит
+
+          const resp = await fetch(targetUrl, { signal: controller.signal, cache: 'no-store' });
+          clearTimeout(timeoutId);
+
           if (resp.ok) {
             const data = await resp.json();
-            if (data && Array.isArray(data.alerts)) {
-              latestAlertsData = data;
+            // allorigins.win іноді повертає { contents: '...' } — розгортаємо
+            const parsed = (data && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
+            if (parsed && Array.isArray(parsed.alerts)) {
+              latestAlertsData = parsed;
+              const isFallback = targetUrl.includes('snapshot');
               if (statusEl) {
-                statusEl.textContent = 'СИСТЕМА ОНЛАЙН (alerts.in.ua)';
-                statusEl.parentElement.style.color = 'var(--safe-green)';
+                statusEl.textContent = isFallback
+                  ? 'АВТОНОМНИЙ РЕЖИМ (snapshot)'
+                  : 'СИСТЕМА ОНЛАЙН (alerts.in.ua)';
+                statusEl.parentElement.style.color = isFallback
+                  ? 'var(--level-yellow)'
+                  : 'var(--safe-green)';
               }
-              updateThreatsUI(data.alerts);
+              updateThreatsUI(parsed.alerts);
               renderMapByCurrentMode();
               return;
             }
           }
         } catch (err) {
-          if (err.name === 'AbortError') return;
-          // продовжуємо до наступного кандидата
+          if (err.name === 'AbortError' && signal.aborted) return; // навмисне скасування
+          // помилка цього джерела — переходимо до наступного
         }
       }
 
-      // Якщо жоден URL не відповів, залишаємо попередні відомі дані
+      // Всі джерела недоступні: показуємо останні відомі дані
       if (statusEl) {
-        statusEl.textContent = 'РЕЖИМ АВТОНОМНОГО МОНІТОРИНГУ';
-        statusEl.parentElement.style.color = 'var(--level-yellow)';
+        statusEl.textContent = 'МЕРЕЖА НЕДОСТУПНА';
+        statusEl.parentElement.style.color = 'var(--level-red)';
       }
       updateThreatsUI(latestAlertsData.alerts || []);
       renderMapByCurrentMode();
@@ -1879,4 +1902,3 @@
   </script>
 </body>
 </html>
-
