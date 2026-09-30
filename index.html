@@ -1153,14 +1153,6 @@ button{
    CONFIG
    ============================================================ */
 
-/*
- * ВАЖНО:
- *
- * Здесь НЕ нужен token alerts.in.ua.
- *
- * В API_PROXY_URL указан URL вашего Cloudflare Worker.
- */
-
 const API_PROXY_URL =
   'https://safeguard-ua-proxy.parhom74164.workers.dev/';
 
@@ -1168,7 +1160,7 @@ const API_PROXY_URL =
 /*
  * GeoJSON
  *
- * Эти файлы находятся в публичном GitHub-репозитории
+ * Ці файли знаходяться в публічному GitHub-репозиторії
  * ukrainian_geodata.
  */
 
@@ -1188,9 +1180,6 @@ const GEO_URLS = {
 
 /*
  * USGS.
- *
- * Ограничиваем область примерно территорией Украины
- * и Чёрного моря.
  */
 
 const USGS_URL =
@@ -1951,11 +1940,6 @@ function focusAlert(alert){
 
   }
 
-  /*
-   * API обычно содержит UID, но не обязательно координаты.
-   * Поэтому для областей используем грубые центры.
-   */
-
   const centers = {
 
     'Київська область':
@@ -2135,10 +2119,6 @@ function getAlertForFeature(
   if(!name)
     return null;
 
-  /*
-   * Сначала точное совпадение.
-   */
-
   let found =
     alerts.find(
       a =>
@@ -2149,10 +2129,6 @@ function getAlertForFeature(
 
   if(found)
     return found;
-
-  /*
-   * Потом область.
-   */
 
   found =
     alerts.find(
@@ -2168,30 +2144,26 @@ function getAlertForFeature(
 
 
 /* ============================================================
-   RENDER MAP
+   RENDER MAP (ИСПРАВЛЕНО: НЕ ПЕРЕЗАПИСЫВАЕТ currentMode)
    ============================================================ */
 
 async function renderMap(){
 
   geoLayer.clearLayers();
 
-  if(currentMode === 'dynamic'){
-
-    currentMode =
-      'oblast';
-
-  }
+  // Использовать геометрию 'oblast' для динамического режима без изменения currentMode
+  const activeGeoMode = (currentMode === 'dynamic') ? 'oblast' : currentMode;
 
   try{
 
     showLoader(
       true,
-      `Завантаження ${currentMode}...`
+      `Завантаження ${activeGeoMode}...`
     );
 
     const geo =
       await loadGeo(
-        currentMode
+        activeGeoMode
       );
 
     const layer =
@@ -2211,12 +2183,12 @@ async function renderMap(){
               return {
 
                 color:
-                  currentMode === 'oblast'
+                  activeGeoMode === 'oblast'
                     ? '#38bdf8'
                     : '#00a9d0',
 
                 weight:
-                  currentMode === 'oblast'
+                  activeGeoMode === 'oblast'
                     ? 1.1
                     : .8,
 
@@ -2241,7 +2213,7 @@ async function renderMap(){
                   : '#991b1b',
 
               weight:
-                currentMode === 'oblast'
+                activeGeoMode === 'oblast'
                   ? 2
                   : 1.5,
 
@@ -2253,7 +2225,7 @@ async function renderMap(){
                   : '#ff3045',
 
               fillOpacity:
-                currentMode === 'oblast'
+                activeGeoMode === 'oblast'
                   ? .48
                   : .42
 
@@ -2906,9 +2878,6 @@ async function loadEarthquakes(){
 
 /*
  * Обновление каждые 60 секунд.
- *
- * Это 1 запрос/минуту с браузера.
- * Реальный API-запрос делает Worker.
  */
 
 setInterval(
