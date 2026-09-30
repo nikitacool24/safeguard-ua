@@ -6,33 +6,14 @@
 
 <title>SafeGuard UA — Моніторинг тривог та небезпек України</title>
 
-<meta name="description"
-      content="SafeGuard UA — оперативний моніторинг тривог та небезпек України.">
-
+<meta name="description" content="SafeGuard UA — оперативний моніторинг тривог та небезпек України.">
 <meta name="theme-color" content="#121212">
 
 <link rel="icon" href="data:,">
-
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  crossorigin=""
->
-
-<link
-  rel="preconnect"
-  href="https://fonts.googleapis.com"
->
-
-<link
-  rel="preconnect"
-  href="https://fonts.gstatic.com"
->
-
-<link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
-  rel="stylesheet"
->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -69,717 +50,201 @@
   --mono:'JetBrains Mono',monospace;
 }
 
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html, body{
+  width:100%; height:100%; overflow:hidden;
+  background:var(--bg); color:var(--white);
+  font-family:var(--font); font-size:13px;
 }
 
-html,
-body{
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:var(--bg);
-  color:var(--white);
-  font-family:var(--font);
-  font-size:13px;
-}
+button{ font:inherit; }
 
-button{
-  font:inherit;
-}
-
-.app{
-  width:100vw;
-  height:100vh;
-  display:flex;
-}
+.app{ width:100vw; height:100vh; display:flex; }
 
 .sidebar{
-  width:var(--sidebar);
-  min-width:360px;
-  max-width:460px;
-  height:100%;
-  background:var(--panel);
-  border-right:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-  z-index:1000;
+  width:var(--sidebar); min-width:360px; max-width:460px; height:100%;
+  background:var(--panel); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:1000;
   box-shadow:4px 0 30px rgba(0,0,0,.65);
 }
 
 .topbar{
-  height:43px;
-  padding:0 15px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background:#121419;
-  border-bottom:1px solid var(--border);
+  height:43px; padding:0 15px; display:flex;
+  align-items:center; justify-content:space-between;
+  background:#121419; border-bottom:1px solid var(--border);
 }
 
 .system-status{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:var(--green);
-  font-family:var(--mono);
-  font-size:10px;
-  font-weight:800;
+  display:flex; align-items:center; gap:8px;
+  color:var(--green); font-family:var(--mono); font-size:10px; font-weight:800;
 }
 
 .status-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--green);
-  box-shadow:0 0 8px var(--green);
+  width:8px; height:8px; border-radius:50%;
+  background:var(--green); box-shadow:0 0 8px var(--green);
 }
 
-.status-dot.offline{
-  background:var(--red);
-  box-shadow:0 0 8px var(--red);
-}
+.status-dot.offline{ background:var(--red); box-shadow:0 0 8px var(--red); }
+.status-dot.loading{ background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
 
-.status-dot.loading{
-  background:var(--yellow);
-  box-shadow:0 0 8px var(--yellow);
-}
-
-.clock{
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:10px;
-}
+.clock{ color:var(--muted); font-family:var(--mono); font-size:10px; }
 
 .brand{
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:11px;
+  padding:14px 16px; display:flex; align-items:center; gap:11px;
   border-bottom:1px solid var(--border);
 }
 
 .logo{
-  width:36px;
-  height:36px;
-  border:1px solid var(--cyan);
-  border-radius:8px;
-  color:var(--cyan);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,212,255,.07);
-  box-shadow:0 0 15px rgba(0,212,255,.18);
+  width:36px; height:36px; border:1px solid var(--cyan); border-radius:8px;
+  color:var(--cyan); display:flex; align-items:center; justify-content:center;
+  background:rgba(0,212,255,.07); box-shadow:0 0 15px rgba(0,212,255,.18);
 }
 
-.brand h1{
-  font-size:16px;
-  font-weight:800;
-  letter-spacing:.5px;
-}
-
-.brand p{
-  color:var(--muted);
-  font-size:10px;
-  margin-top:2px;
-}
+.brand h1{ font-size:16px; font-weight:800; letter-spacing:.5px; }
+.brand p{ color:var(--muted); font-size:10px; margin-top:2px; }
 
 .tabs{
-  display:flex;
-  gap:5px;
-  padding:4px 9px;
-  background:#111317;
+  display:flex; gap:5px; padding:4px 9px; background:#111317;
   border-bottom:1px solid var(--border);
 }
 
 .tab{
-  flex:1;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--muted);
-  padding:8px 4px;
-  border-radius:5px;
-  cursor:pointer;
-  font-size:11px;
-  font-weight:700;
+  flex:1; border:1px solid transparent; background:transparent;
+  color:var(--muted); padding:8px 4px; border-radius:5px; cursor:pointer;
+  font-size:11px; font-weight:700;
 }
 
-.tab:hover{
-  background:#1d2128;
-  color:white;
-}
+.tab:hover{ background:#1d2128; color:white; }
+.tab.active{ background:#20252d; color:white; border-color:var(--border2); border-bottom-color:var(--cyan); }
 
-.tab.active{
-  background:#20252d;
-  color:white;
-  border-color:var(--border2);
-  border-bottom-color:var(--cyan);
-}
+.body{ flex:1; overflow-y:auto; padding:13px 15px; }
+.body::-webkit-scrollbar{ width:5px; }
+.body::-webkit-scrollbar-thumb{ background:#303640; border-radius:4px; }
 
-.body{
-  flex:1;
-  overflow-y:auto;
-  padding:13px 15px;
-}
+.tab-content{ display:none; }
+.tab-content.active{ display:block; }
 
-.body::-webkit-scrollbar{
-  width:5px;
-}
-
-.body::-webkit-scrollbar-thumb{
-  background:#303640;
-  border-radius:4px;
-}
-
-.tab-content{
-  display:none;
-}
-
-.tab-content.active{
-  display:block;
-}
-
-.level-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
+.level-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
 .level-card{
-  border-radius:7px;
-  padding:10px;
-  border:1px solid;
-  cursor:pointer;
-  transition:.15s;
+  border-radius:7px; padding:10px; border:1px solid; cursor:pointer; transition:.15s;
 }
+.level-card:hover{ transform:translateY(-2px); }
+.level-red{ border-color:var(--red); background:var(--red-bg); }
+.level-yellow{ border-color:var(--yellow); background:var(--yellow-bg); }
 
-.level-card:hover{
-  transform:translateY(-2px);
-}
+.level-head{ display:flex; justify-content:space-between; align-items:center; }
+.level-title{ font-family:var(--mono); font-size:10px; font-weight:800; }
+.red-text{ color:var(--red); }
+.yellow-text{ color:var(--yellow); }
+.level-count{ font-family:var(--mono); font-size:20px; font-weight:800; }
+.level-action{ margin-top:4px; font-weight:800; font-size:10px; }
+.level-desc{ margin-top:5px; color:var(--muted); font-size:9.5px; line-height:1.35; }
 
-.level-red{
-  border-color:var(--red);
-  background:var(--red-bg);
-}
-
-.level-yellow{
-  border-color:var(--yellow);
-  background:var(--yellow-bg);
-}
-
-.level-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.level-title{
-  font-family:var(--mono);
-  font-size:10px;
-  font-weight:800;
-}
-
-.red-text{
-  color:var(--red);
-}
-
-.yellow-text{
-  color:var(--yellow);
-}
-
-.level-count{
-  font-family:var(--mono);
-  font-size:20px;
-  font-weight:800;
-}
-
-.level-action{
-  margin-top:4px;
-  font-weight:800;
-  font-size:10px;
-}
-
-.level-desc{
-  margin-top:5px;
-  color:var(--muted);
-  font-size:9.5px;
-  line-height:1.35;
-}
-
-.filters{
-  display:grid;
-  grid-template-columns:1.1fr 1fr 1fr;
-  gap:5px;
-  margin-top:7px;
-}
-
+.filters{ display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:5px; margin-top:7px; }
 .filter{
-  border:1px solid var(--border);
-  background:#121419;
-  color:var(--muted);
-  border-radius:4px;
-  padding:6px 4px;
-  cursor:pointer;
-  font-family:var(--mono);
-  font-size:9.5px;
-  font-weight:700;
+  border:1px solid var(--border); background:#121419; color:var(--muted);
+  border-radius:4px; padding:6px 4px; cursor:pointer; font-family:var(--mono);
+  font-size:9.5px; font-weight:700;
 }
+.filter.active{ color:white; background:#252a33; border-color:var(--border2); }
 
-.filter.active{
-  color:white;
-  background:#252a33;
-  border-color:var(--border2);
-}
-
-.section{
-  margin-top:11px;
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:6px;
-}
-
-.section-title span:first-child{
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.5px;
-}
-
-.section-status{
-  color:var(--cyan);
-  font-family:var(--mono);
-  font-size:9px;
-}
+.section{ margin-top:11px; }
+.section-title{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.section-title span:first-child{ color:var(--muted); font-family:var(--mono); font-size:10px; font-weight:800; letter-spacing:.5px; }
+.section-status{ color:var(--cyan); font-family:var(--mono); font-size:9px; }
 
 .mode-selector{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:3px;
-  background:#111317;
-  padding:3px;
-  border:1px solid var(--border);
-  border-radius:6px;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:3px; background:#111317;
+  padding:3px; border:1px solid var(--border); border-radius:6px;
 }
-
 .mode{
-  border:0;
-  background:transparent;
-  color:var(--muted);
-  padding:6px 2px;
-  cursor:pointer;
-  border-radius:4px;
-  font-family:var(--mono);
-  font-size:9px;
-  font-weight:800;
+  border:0; background:transparent; color:var(--muted); padding:6px 2px;
+  cursor:pointer; border-radius:4px; font-family:var(--mono); font-size:9px; font-weight:800;
 }
+.mode.active{ color:var(--cyan); background:#252b35; }
 
-.mode.active{
-  color:var(--cyan);
-  background:#252b35;
-}
-
-.alert-list{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  max-height:430px;
-  overflow-y:auto;
-  padding-right:2px;
-}
-
-.alert-list::-webkit-scrollbar{
-  width:4px;
-}
-
-.alert-list::-webkit-scrollbar-thumb{
-  background:#333943;
-}
+.alert-list{ display:flex; flex-direction:column; gap:6px; max-height:430px; overflow-y:auto; padding-right:2px; }
+.alert-list::-webkit-scrollbar{ width:4px; }
+.alert-list::-webkit-scrollbar-thumb{ background:#333943; }
 
 .alert-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-left:4px solid #555;
-  border-radius:6px;
-  padding:9px 10px;
-  cursor:pointer;
-  transition:.15s;
+  background:var(--card); border:1px solid var(--border); border-left:4px solid #555;
+  border-radius:6px; padding:9px 10px; cursor:pointer; transition:.15s;
 }
+.alert-card:hover{ background:var(--card2); transform:translateX(2px); }
+.alert-card.red{ border-color:rgba(255,48,69,.4); border-left-color:var(--red); background:rgba(255,48,69,.07); }
+.alert-card.yellow{ border-color:rgba(255,208,0,.4); border-left-color:var(--yellow); background:rgba(255,208,0,.06); }
+.alert-card.artillery{ border-left-color:var(--orange); }
+.alert-card.urban{ border-left-color:var(--pink); }
+.alert-card.chemical{ border-left-color:var(--lime); }
+.alert-card.nuclear{ border-left-color:var(--nuclear); }
 
-.alert-card:hover{
-  background:var(--card2);
-  transform:translateX(2px);
-}
+.alert-head{ display:flex; align-items:center; justify-content:space-between; gap:7px; }
+.alert-name{ font-weight:800; font-size:11.5px; }
 
-.alert-card.red{
-  border-color:rgba(255,48,69,.4);
-  border-left-color:var(--red);
-  background:rgba(255,48,69,.07);
-}
+.badge{ flex-shrink:0; padding:3px 7px; border-radius:4px; font-family:var(--mono); font-size:8px; font-weight:800; color:white; }
+.badge.red{ background:var(--red); box-shadow:0 0 8px rgba(255,48,69,.4); }
+.badge.yellow{ background:var(--yellow); color:#111; }
+.badge.orange{ background:var(--orange); }
+.badge.pink{ background:var(--pink); }
+.badge.lime{ background:var(--lime); color:#111; }
+.badge.nuclear{ background:var(--nuclear); }
 
-.alert-card.yellow{
-  border-color:rgba(255,208,0,.4);
-  border-left-color:var(--yellow);
-  background:rgba(255,208,0,.06);
-}
+.alert-action{ margin-top:3px; font-size:10px; font-weight:700; }
+.alert-action.red{ color:#ff9aa4; }
+.alert-action.yellow{ color:#ffe980; }
 
-.alert-card.artillery{
-  border-left-color:var(--orange);
-}
+.alert-meta{ display:flex; justify-content:space-between; margin-top:5px; color:var(--muted); font-family:var(--mono); font-size:8.5px; }
 
-.alert-card.urban{
-  border-left-color:var(--pink);
-}
+.card{ background:var(--card); border:1px solid var(--border); border-radius:7px; padding:11px; }
+.card-title{ color:var(--muted); font-family:var(--mono); font-size:10px; font-weight:800; margin-bottom:7px; }
+.info{ color:var(--muted); font-size:10.5px; line-height:1.45; }
 
-.alert-card.chemical{
-  border-left-color:var(--lime);
-}
+.hazard-list{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.hazard{ padding:8px; border:1px solid var(--border); border-left:4px solid var(--purple); background:#1b1d24; border-radius:5px; }
+.hazard strong{ display:block; font-size:11px; }
+.hazard small{ color:var(--muted); font-family:var(--mono); }
 
-.alert-card.nuclear{
-  border-left-color:var(--nuclear);
-}
+.audio-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.btn{ border:1px solid var(--border2); background:#20242b; color:var(--text); padding:9px 6px; border-radius:5px; cursor:pointer; font-size:10.5px; font-weight:700; }
+.btn:hover{ background:#2b323c; border-color:var(--cyan); }
+.btn-red{ color:#ff9aa4; border-color:var(--red); background:rgba(255,48,69,.12); }
+.btn-yellow{ color:#ffe980; border-color:var(--yellow); background:rgba(255,208,0,.10); }
 
-.alert-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:7px;
-}
+.footer{ height:42px; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; background:#111317; border-top:1px solid var(--border); color:var(--muted); font-family:var(--mono); font-size:9px; }
+.refresh{ border:1px solid var(--border2); background:#20242b; color:white; padding:5px 9px; border-radius:4px; cursor:pointer; font-size:9px; }
 
-.alert-name{
-  font-weight:800;
-  font-size:11.5px;
-}
+.map-wrap{ position:relative; flex:1; height:100%; }
+#map{ width:100%; height:100%; background:#090a0c; }
 
-.badge{
-  flex-shrink:0;
-  padding:3px 7px;
-  border-radius:4px;
-  font-family:var(--mono);
-  font-size:8px;
-  font-weight:800;
-  color:white;
-}
+.hud{ position:absolute; top:13px; right:13px; z-index:1000; width:300px; background:rgba(19,22,27,.95); border:1px solid var(--border); border-radius:7px; padding:10px 12px; box-shadow:0 5px 20px rgba(0,0,0,.6); font-family:var(--mono); }
+.hud h3{ color:var(--cyan); font-size:10px; margin-bottom:5px; }
+.legend-row{ padding:5px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.legend-row:last-child{ border-bottom:0; }
+.legend-title{ font-weight:800; font-size:9px; }
+.legend-desc{ margin-top:2px; color:var(--muted); font-size:8.5px; padding-left:17px; }
+.chip{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; }
 
-.badge.red{
-  background:var(--red);
-  box-shadow:0 0 8px rgba(255,48,69,.4);
-}
+.coord{ position:absolute; top:190px; right:13px; z-index:1000; background:rgba(19,22,27,.95); border:1px solid var(--border); border-radius:6px; padding:10px 13px; color:var(--text); font-family:var(--mono); font-size:9px; }
 
-.badge.yellow{
-  background:var(--yellow);
-  color:#111;
-}
+.loader{ display:none; position:absolute; bottom:22px; left:18px; z-index:1000; background:rgba(20,23,28,.95); border:1px solid var(--border2); border-radius:6px; padding:7px 10px; color:var(--cyan); font-family:var(--mono); font-size:9px; }
+.loader.show{ display:flex; gap:7px; align-items:center; }
+.spinner{ width:11px; height:11px; border:2px solid rgba(0,212,255,.2); border-top-color:var(--cyan); border-radius:50%; animation:spin .7s linear infinite; }
 
-.badge.orange{
-  background:var(--orange);
-}
+@keyframes spin{ to{transform:rotate(360deg)} }
 
-.badge.pink{
-  background:var(--pink);
-}
-
-.badge.lime{
-  background:var(--lime);
-  color:#111;
-}
-
-.badge.nuclear{
-  background:var(--nuclear);
-}
-
-.alert-action{
-  margin-top:3px;
-  font-size:10px;
-  font-weight:700;
-}
-
-.alert-action.red{
-  color:#ff9aa4;
-}
-
-.alert-action.yellow{
-  color:#ffe980;
-}
-
-.alert-meta{
-  display:flex;
-  justify-content:space-between;
-  margin-top:5px;
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:8.5px;
-}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:7px;
-  padding:11px;
-}
-
-.card-title{
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:10px;
-  font-weight:800;
-  margin-bottom:7px;
-}
-
-.info{
-  color:var(--muted);
-  font-size:10.5px;
-  line-height:1.45;
-}
-
-.hazard-list{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-top:8px;
-}
-
-.hazard{
-  padding:8px;
-  border:1px solid var(--border);
-  border-left:4px solid var(--purple);
-  background:#1b1d24;
-  border-radius:5px;
-}
-
-.hazard strong{
-  display:block;
-  font-size:11px;
-}
-
-.hazard small{
-  color:var(--muted);
-  font-family:var(--mono);
-}
-
-.audio-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:7px;
-}
-
-.btn{
-  border:1px solid var(--border2);
-  background:#20242b;
-  color:var(--text);
-  padding:9px 6px;
-  border-radius:5px;
-  cursor:pointer;
-  font-size:10.5px;
-  font-weight:700;
-}
-
-.btn:hover{
-  background:#2b323c;
-  border-color:var(--cyan);
-}
-
-.btn-red{
-  color:#ff9aa4;
-  border-color:var(--red);
-  background:rgba(255,48,69,.12);
-}
-
-.btn-yellow{
-  color:#ffe980;
-  border-color:var(--yellow);
-  background:rgba(255,208,0,.10);
-}
-
-.footer{
-  height:42px;
-  padding:6px 14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background:#111317;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:9px;
-}
-
-.refresh{
-  border:1px solid var(--border2);
-  background:#20242b;
-  color:white;
-  padding:5px 9px;
-  border-radius:4px;
-  cursor:pointer;
-  font-size:9px;
-}
-
-.map-wrap{
-  position:relative;
-  flex:1;
-  height:100%;
-}
-
-#map{
-  width:100%;
-  height:100%;
-  background:#090a0c;
-}
-
-.hud{
-  position:absolute;
-  top:13px;
-  right:13px;
-  z-index:1000;
-  width:300px;
-  background:rgba(19,22,27,.95);
-  border:1px solid var(--border);
-  border-radius:7px;
-  padding:10px 12px;
-  box-shadow:0 5px 20px rgba(0,0,0,.6);
-  font-family:var(--mono);
-}
-
-.hud h3{
-  color:var(--cyan);
-  font-size:10px;
-  margin-bottom:5px;
-}
-
-.legend-row{
-  padding:5px 0;
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-
-.legend-row:last-child{
-  border-bottom:0;
-}
-
-.legend-title{
-  font-weight:800;
-  font-size:9px;
-}
-
-.legend-desc{
-  margin-top:2px;
-  color:var(--muted);
-  font-size:8.5px;
-  padding-left:17px;
-}
-
-.chip{
-  display:inline-block;
-  width:10px;
-  height:10px;
-  border-radius:3px;
-  margin-right:6px;
-}
-
-.coord{
-  position:absolute;
-  top:190px;
-  right:13px;
-  z-index:1000;
-  background:rgba(19,22,27,.95);
-  border:1px solid var(--border);
-  border-radius:6px;
-  padding:10px 13px;
-  color:var(--text);
-  font-family:var(--mono);
-  font-size:9px;
-}
-
-.loader{
-  display:none;
-  position:absolute;
-  bottom:22px;
-  left:18px;
-  z-index:1000;
-  background:rgba(20,23,28,.95);
-  border:1px solid var(--border2);
-  border-radius:6px;
-  padding:7px 10px;
-  color:var(--cyan);
-  font-family:var(--mono);
-  font-size:9px;
-}
-
-.loader.show{
-  display:flex;
-  gap:7px;
-  align-items:center;
-}
-
-.spinner{
-  width:11px;
-  height:11px;
-  border:2px solid rgba(0,212,255,.2);
-  border-top-color:var(--cyan);
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
-}
-
-.leaflet-tooltip.safeguard{
-  background:rgba(18,20,26,.97);
-  color:white;
-  border:1px solid var(--border2);
-  box-shadow:0 5px 20px rgba(0,0,0,.7);
-  font-family:var(--font);
-}
-
-.empty{
-  padding:20px 10px;
-  text-align:center;
-  color:var(--muted);
-  font-family:var(--mono);
-  font-size:9px;
-}
-
-.warning{
-  color:#ffb4bc;
-}
-
-.ok{
-  color:var(--green);
-}
+.leaflet-tooltip.safeguard{ background:rgba(18,20,26,.97); color:white; border:1px solid var(--border2); box-shadow:0 5px 20px rgba(0,0,0,.7); font-family:var(--font); }
+.empty{ padding:20px 10px; text-align:center; color:var(--muted); font-family:var(--mono); font-size:9px; }
+.warning{ color:#ffb4bc; }
+.ok{ color:var(--green); }
 
 @media(max-width:800px){
-  .sidebar{
-    width:100%;
-    max-width:none;
-    min-width:0;
-    height:52%;
-    position:absolute;
-    bottom:0;
-    left:0;
-    z-index:2000;
-    box-shadow:0 -5px 30px rgba(0,0,0,.7);
-  }
-
-  .map-wrap{
-    width:100%;
-    height:100%;
-  }
-
-  .hud{
-    top:10px;
-    right:10px;
-    width:250px;
-  }
-
-  .coord{
-    top:180px;
-  }
+  .sidebar{ width:100%; max-width:none; min-width:0; height:52%; position:absolute; bottom:0; left:0; z-index:2000; box-shadow:0 -5px 30px rgba(0,0,0,.7); }
+  .map-wrap{ width:100%; height:100%; }
+  .hud{ top:10px; right:10px; width:250px; }
+  .coord{ top:180px; }
 }
 </style>
 </head>
@@ -802,534 +267,224 @@ button{
   </div>
 
   <div class="brand">
-
     <div class="logo">
-      <svg width="20" height="20" viewBox="0 0 24 24"
-           fill="none"
-           stroke="currentColor"
-           stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         <circle cx="12" cy="11" r="2.5"/>
       </svg>
     </div>
-
     <div>
       <h1>SAFEGUARD UA</h1>
       <p>Моніторинг рівнів тривог та небезпек</p>
     </div>
-
   </div>
 
   <div class="tabs">
-
-    <button class="tab active" data-tab="threats">
-      ⚡ Рівні тривог
-    </button>
-
-    <button class="tab" data-tab="hazards">
-      🌋 Сейсміка / ДСНС
-    </button>
-
-    <button class="tab" data-tab="audio">
-      🔊 Сповіщення
-    </button>
-
+    <button class="tab active" data-tab="threats">⚡ Рівні тривог</button>
+    <button class="tab" data-tab="hazards">🌋 Сейсміка / ДСНС</button>
+    <button class="tab" data-tab="audio">🔊 Сповіщення</button>
   </div>
 
   <div class="body">
 
     <!-- ================= THREATS ================= -->
-
     <section class="tab-content active" id="tab-threats">
 
       <div class="level-grid">
-
         <div class="level-card level-red" id="redCard">
-
           <div class="level-head">
-            <span class="level-title red-text">
-              🔴 ЧЕРВОНИЙ
-            </span>
-
-            <span class="level-count red-text" id="countRed">
-              0
-            </span>
+            <span class="level-title red-text">🔴 ЧЕРВОНИЙ</span>
+            <span class="level-count red-text" id="countRed">0</span>
           </div>
-
-          <div class="level-action">
-            НЕГАЙНО В УКРИТТЯ
-          </div>
-
-          <div class="level-desc">
-            Червоний рівень за даними API.
-          </div>
-
+          <div class="level-action">НЕГАЙНО В УКРИТТЯ</div>
+          <div class="level-desc">Червоний рівень за даними API.</div>
         </div>
 
         <div class="level-card level-yellow" id="yellowCard">
-
           <div class="level-head">
-            <span class="level-title yellow-text">
-              🟡 ЖОВТИЙ
-            </span>
-
-            <span class="level-count yellow-text" id="countYellow">
-              0
-            </span>
+            <span class="level-title yellow-text">🟡 ЖОВТИЙ</span>
+            <span class="level-count yellow-text" id="countYellow">0</span>
           </div>
-
-          <div class="level-action">
-            ПІДВИЩЕНА УВАГА
-          </div>
-
-          <div class="level-desc">
-            Жовтий рівень за даними API.
-          </div>
-
+          <div class="level-action">ПІДВИЩЕНА УВАГА</div>
+          <div class="level-desc">Жовтий рівень за даними API.</div>
         </div>
-
       </div>
 
       <div class="filters">
-
-        <button class="filter active" data-filter="all">
-          Всі (<span id="countAll">0</span>)
-        </button>
-
-        <button class="filter" data-filter="red">
-          🔴 Червоні
-        </button>
-
-        <button class="filter" data-filter="yellow">
-          🟡 Жовті
-        </button>
-
+        <button class="filter active" data-filter="all">Всі (<span id="countAll">0</span>)</button>
+        <button class="filter" data-filter="red">🔴 Червоні</button>
+        <button class="filter" data-filter="yellow">🟡 Жовті</button>
       </div>
 
       <div class="section">
-
         <div class="section-title">
           <span>КОНТУРИ КАРТИ:</span>
-          <span class="section-status" id="modeLabel">
-            ДИНАМІЧНЕ
-          </span>
+          <span class="section-status" id="modeLabel">ДИНАМІЧНЕ</span>
         </div>
 
         <div class="mode-selector">
-
-          <button class="mode active" data-mode="dynamic">
-            ДИНАМІЧНЕ
-          </button>
-
-          <button class="mode" data-mode="oblast">
-            ОБЛАСТІ
-          </button>
-
-          <button class="mode" data-mode="raion">
-            РАЙОНИ
-          </button>
-
-          <button class="mode" data-mode="hromada">
-            ГРОМАДИ
-          </button>
-
+          <button class="mode active" data-mode="dynamic">ДИНАМІЧНЕ</button>
+          <button class="mode" data-mode="oblast">ОБЛАСТІ</button>
+          <button class="mode" data-mode="raion">РАЙОНИ</button>
+          <button class="mode" data-mode="hromada">ГРОМАДИ</button>
         </div>
-
       </div>
 
       <div class="section">
-
         <div class="section-title">
-
           <span>ОПЕРАТИВНІ СПОВІЩЕННЯ:</span>
-
-          <span class="section-status"
-                id="lastSync">
-            — 
-          </span>
-
+          <span class="section-status" id="lastSync">—</span>
         </div>
 
         <div class="alert-list" id="alertList">
-          <div class="empty">
-            Очікування даних...
-          </div>
+          <div class="empty">Очікування даних...</div>
         </div>
-
       </div>
 
     </section>
 
-
     <!-- ================= HAZARDS ================= -->
-
     <section class="tab-content" id="tab-hazards">
-
       <div class="card">
-
-        <div class="card-title">
-          ПІДТВЕРДЖЕНІ ПРИРОДНІ ПОДІЇ
-        </div>
-
-        <div class="info">
-          USGS earthquake feed для території України,
-          Чорного моря та Карпат.
-        </div>
-
-        <div style="margin-top:8px"
-             id="hazardStatus"
-             class="ok">
-          ● Завантаження...
-        </div>
-
+        <div class="card-title">ПІДТВЕРДЖЕНІ ПРИРОДНІ ПОДІЇ</div>
+        <div class="info">USGS earthquake feed для території України, Чорного моря та Карпат.</div>
+        <div style="margin-top:8px" id="hazardStatus" class="ok">● Завантаження...</div>
       </div>
 
       <div class="section">
-
-        <div class="section-title">
-          <span>ОСТАННІ ПОДІЇ:</span>
+        <div class="section-title"><span>ОСТАННІ ПОДІЇ:</span></div>
+        <div class="hazard-list" id="hazardList">
+          <div class="empty">Завантаження USGS...</div>
         </div>
-
-        <div class="hazard-list"
-             id="hazardList">
-
-          <div class="empty">
-            Завантаження USGS...
-          </div>
-
-        </div>
-
       </div>
-
     </section>
 
-
     <!-- ================= AUDIO ================= -->
-
     <section class="tab-content" id="tab-audio">
-
       <div class="card">
-
-        <div class="card-title">
-          ДИКТОР РІВНІВ ТРИВОГИ
+        <div class="card-title">ДИКТОР РІВНІВ ТРИВОГИ</div>
+        <div class="info">Озвучення виконується локально через Web Speech API.</div>
+        <div class="audio-grid" style="margin-top:10px">
+          <button class="btn btn-red" id="testRed">🔴 Тест: червоний</button>
+          <button class="btn btn-yellow" id="testYellow">🟡 Тест: жовтий</button>
+          <button class="btn" id="testClear">🔕 Відбій</button>
+          <button class="btn" id="toggleSound">🔊 Звук: увімкнено</button>
         </div>
-
-        <div class="info">
-          Озвучення виконується локально через Web Speech API.
-        </div>
-
-        <div class="audio-grid"
-             style="margin-top:10px">
-
-          <button class="btn btn-red"
-                  id="testRed">
-            🔴 Тест: червоний
-          </button>
-
-          <button class="btn btn-yellow"
-                  id="testYellow">
-            🟡 Тест: жовтий
-          </button>
-
-          <button class="btn"
-                  id="testClear">
-            🔕 Відбій
-          </button>
-
-          <button class="btn"
-                  id="toggleSound">
-            🔊 Звук: увімкнено
-          </button>
-
-        </div>
-
       </div>
-
     </section>
 
   </div>
 
   <div class="footer">
-
-    <span>
-      SafeGuard UA v3.0 · GitHub Pages
-    </span>
-
-    <button class="refresh"
-            id="refresh">
-      ↻ Оновити
-    </button>
-
+    <span>SafeGuard UA v3.0 · GitHub Pages</span>
+    <button class="refresh" id="refresh">↻ Оновити</button>
   </div>
 
 </aside>
 
-
 <main class="map-wrap">
-
   <div id="map"></div>
 
   <div class="hud">
-
-    <h3>
-      РІВНІ ТРИВОГ ТА РЕЖИМИ
-    </h3>
-
+    <h3>РІВНІ ТРИВОГ ТА РЕЖИМИ</h3>
     <div class="legend-row">
-
-      <div class="legend-title">
-        <span class="chip"
-              style="background:#ff3045"></span>
-        ЧЕРВОНИЙ
-      </div>
-
-      <div class="legend-desc">
-        Високий рівень небезпеки за даними API.
-      </div>
-
+      <div class="legend-title"><span class="chip" style="background:#ff3045"></span>ЧЕРВОНИЙ</div>
+      <div class="legend-desc">Високий рівень небезпеки за даними API.</div>
     </div>
-
     <div class="legend-row">
-
-      <div class="legend-title">
-        <span class="chip"
-              style="background:#ffd000"></span>
-        ЖОВТИЙ
-      </div>
-
-      <div class="legend-desc">
-        Підвищений рівень небезпеки.
-      </div>
-
+      <div class="legend-title"><span class="chip" style="background:#ffd000"></span>ЖОВТИЙ</div>
+      <div class="legend-desc">Підвищений рівень небезпеки.</div>
     </div>
-
     <div class="legend-row">
-
-      <div class="legend-title"
-           style="color:#00e676">
-        <span class="chip"
-              style="border:1px solid #00e676;background:#162920"></span>
-        СПОКІЙНО
+      <div class="legend-title" style="color:#00e676">
+        <span class="chip" style="border:1px solid #00e676;background:#162920"></span>СПОКІЙНО
       </div>
-
-      <div class="legend-desc">
-        Активна загроза не виявлена.
-      </div>
-
+      <div class="legend-desc">Активна загроза не виявлена.</div>
     </div>
-
   </div>
 
-  <div class="coord"
-       id="coords">
-    48.3794° N, 31.1656° E
-  </div>
-
-  <div class="loader"
-       id="loader">
-
+  <div class="coord" id="coords">48.3794° N, 31.1656° E</div>
+  <div class="loader" id="loader">
     <span class="spinner"></span>
-
-    <span id="loaderText">
-      Завантаження...
-    </span>
-
+    <span id="loaderText">Завантаження...</span>
   </div>
-
 </main>
 
 </div>
 
-
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  crossorigin="">
-</script>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
-
 /* ============================================================
    CONFIG
    ============================================================ */
 
-const API_PROXY_URL =
-  'https://safeguard-ua-proxy.parhom74164.workers.dev/';
-
-
-/*
- * GeoJSON
- *
- * Ці файли знаходяться в публічному GitHub-репозиторії
- * ukrainian_geodata.
- */
+const API_PROXY_URL = 'https://safeguard-ua-proxy.parhom74164.workers.dev/';
 
 const GEO_URLS = {
-
-  oblast:
-    'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/regiony.geojson',
-
-  raion:
-    'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/rayony.geojson',
-
-  hromada:
-    'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/hromady.geojson'
-
+  oblast: 'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/regiony.geojson',
+  raion: 'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/rayony.geojson',
+  hromada: 'https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/hromady.geojson'
 };
 
-
-/*
- * USGS.
- */
-
-const USGS_URL =
-  'https://earthquake.usgs.gov/fdsnws/event/1/query?' +
-  'format=geojson' +
-  '&starttime=now-7days' +
-  '&minmagnitude=2.0' +
-  '&minlatitude=41' +
-  '&maxlatitude=53' +
-  '&minlongitude=20' +
-  '&maxlongitude=42' +
-  '&orderby=time' +
-  '&limit=30';
-
+const USGS_URL = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=now-7days&minmagnitude=2.0&minlatitude=41&maxlatitude=53&minlongitude=20&maxlongitude=42&orderby=time&limit=30';
 
 /* ============================================================
    STATE
    ============================================================ */
 
 let alerts = [];
-
 let currentFilter = 'all';
-
 let currentMode = 'dynamic';
 
-let currentGeoData = {
-  oblast: null,
-  raion: null,
-  hromada: null
-};
-
+let currentGeoData = { oblast: null, raion: null, hromada: null };
 let lastSuccessfulSync = null;
-
 let soundEnabled = true;
-
 let syncRunning = false;
-
 
 /* ============================================================
    DOM
    ============================================================ */
 
-const $ = id =>
-  document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-const statusText =
-  $('systemStatus');
-
-const statusDot =
-  $('statusDot');
-
-const alertList =
-  $('alertList');
-
-const countRed =
-  $('countRed');
-
-const countYellow =
-  $('countYellow');
-
-const countAll =
-  $('countAll');
-
-const lastSync =
-  $('lastSync');
-
-const modeLabel =
-  $('modeLabel');
-
-const loader =
-  $('loader');
-
-const loaderText =
-  $('loaderText');
-
+const statusText = $('systemStatus');
+const statusDot = $('statusDot');
+const alertList = $('alertList');
+const countRed = $('countRed');
+const countYellow = $('countYellow');
+const countAll = $('countAll');
+const lastSync = $('lastSync');
+const modeLabel = $('modeLabel');
+const loader = $('loader');
+const loaderText = $('loaderText');
 
 /* ============================================================
    MAP
    ============================================================ */
 
-const map = L.map('map', {
+const map = L.map('map', { center: [48.3794, 31.1656], zoom:6, minZoom:5, zoomControl:false });
 
-  center: [
-    48.3794,
-    31.1656
-  ],
+L.control.zoom({ position:'bottomright' }).addTo(map);
 
-  zoom:6,
-
-  minZoom:5,
-
-  zoomControl:false
-
-});
-
-
-L.control.zoom({
-  position:'bottomright'
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom:16, attribution:'&copy; Esri'
 }).addTo(map);
 
-
-L.tileLayer(
-
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-
-  {
-    maxZoom:16,
-
-    attribution:
-      '&copy; Esri'
-  }
-
-).addTo(map);
-
-
-const geoLayer =
-  L.layerGroup().addTo(map);
-
-
-const quakeLayer =
-  L.layerGroup().addTo(map);
-
-
-/* ============================================================
-   MAP COORDINATES
-   ============================================================ */
+const geoLayer = L.layerGroup().addTo(map);
+const overlayLayer = L.layerGroup().addTo(map);
+const quakeLayer = L.layerGroup().addTo(map);
 
 map.on('mousemove', event => {
-
-  const lat =
-    event.latlng.lat.toFixed(4);
-
-  const lng =
-    event.latlng.lng.toFixed(4);
-
-  $('coords').textContent =
-    `${lat}° N, ${lng}° E`;
-
+  $('coords').textContent = `${event.latlng.lat.toFixed(4)}° N, ${event.latlng.lng.toFixed(4)}° E`;
 });
 
-
 /* ============================================================
-   HELPERS
+   HELPERS & NORMALIZATION
    ============================================================ */
 
 function normalizeName(value){
-
-  if(!value)
-    return '';
-
+  if(!value) return '';
   return String(value)
     .toLowerCase()
     .replace(/територіальна\s*громада/gi,'')
@@ -1343,1559 +498,439 @@ function normalizeName(value){
     .replace(/[^а-яіїєґa-z0-9\s]/gi,'')
     .replace(/\s+/g,' ')
     .trim();
-
 }
-
 
 function escapeHtml(value){
-
   return String(value ?? '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
-
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
-
 
 function formatTime(date){
-
-  if(!date)
-    return '—';
-
-  return new Intl.DateTimeFormat(
-    'uk-UA',
-    {
-      timeZone:'Europe/Kyiv',
-      hour:'2-digit',
-      minute:'2-digit',
-      second:'2-digit'
-    }
-  ).format(new Date(date));
-
+  if(!date) return '—';
+  return new Intl.DateTimeFormat('uk-UA', {
+    timeZone:'Europe/Kyiv', hour:'2-digit', minute:'2-digit', second:'2-digit'
+  }).format(new Date(date));
 }
-
 
 function formatDuration(start){
-
-  if(!start)
-    return '';
-
-  const seconds =
-    Math.max(
-      0,
-      Math.floor(
-        (Date.now() -
-        new Date(start).getTime()) / 1000
-      )
-    );
-
-  const h =
-    Math.floor(seconds / 3600);
-
-  const m =
-    Math.floor(
-      (seconds % 3600) / 60
-    );
-
-  if(h)
-    return `${h} год ${m} хв`;
-
-  return `${m} хв`;
-
+  if(!start) return '';
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(start).getTime()) / 1000));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h ? `${h} год ${m} хв` : `${m} хв`;
 }
-
-
-/* ============================================================
-   THREAT TYPE
-   ============================================================ */
-
-function getThreatInfo(alert){
-
-  const type =
-    alert.alert_type || 'air_raid';
-
-  switch(type){
-
-    case 'artillery_shelling':
-
-      return {
-        cls:'artillery',
-        badge:'АРТА / ОБСТРІЛ',
-        badgeClass:'orange',
-        action:'Артилерійський обстріл'
-      };
-
-    case 'urban_fights':
-
-      return {
-        cls:'urban',
-        badge:'ВУЛИЧНІ БОЇ',
-        badgeClass:'pink',
-        action:'Вуличні бої'
-      };
-
-    case 'chemical':
-
-      return {
-        cls:'chemical',
-        badge:'ХІМІЧНА',
-        badgeClass:'lime',
-        action:'Хімічна небезпека'
-      };
-
-    case 'nuclear':
-
-      return {
-        cls:'nuclear',
-        badge:'☢ ЯДЕРНА',
-        badgeClass:'nuclear',
-        action:'Ядерна небезпека'
-      };
-
-    default:
-
-      if(alert.alert_level === 'yellow'){
-
-        return {
-          cls:'yellow',
-          badge:'🟡 ЖОВТИЙ',
-          badgeClass:'yellow',
-          action:'Підвищена увага'
-        };
-
-      }
-
-      return {
-        cls:'red',
-        badge:'🔴 ЧЕРВОНИЙ',
-        badgeClass:'red',
-        action:'НЕГАЙНО В УКРИТТЯ!'
-      };
-
-  }
-
-}
-
-
-/* ============================================================
-   API
-   ============================================================ */
-
-async function fetchAlerts(){
-
-  if(
-    !API_PROXY_URL ||
-    API_PROXY_URL.includes('YOUR-WORKER')
-  ){
-
-    throw new Error(
-      'Не налаштований API_PROXY_URL'
-    );
-
-  }
-
-  const controller =
-    new AbortController();
-
-  const timeout =
-    setTimeout(
-      () => controller.abort(),
-      8000
-    );
-
-  try{
-
-    const response =
-      await fetch(
-        API_PROXY_URL,
-        {
-          method:'GET',
-          cache:'no-store',
-          signal:controller.signal,
-          headers:{
-            'Accept':'application/json'
-          }
-        }
-      );
-
-    if(!response.ok){
-
-      throw new Error(
-        `HTTP ${response.status}`
-      );
-
-    }
-
-    const data =
-      await response.json();
-
-    if(
-      !data ||
-      !Array.isArray(data.alerts)
-    ){
-
-      throw new Error(
-        'Некоректна відповідь API'
-      );
-
-    }
-
-    return data;
-
-  } finally {
-
-    clearTimeout(timeout);
-
-  }
-
-}
-
-
-/* ============================================================
-   LOCAL LAST SUCCESSFUL CACHE
-   ============================================================ */
-
-function saveLocalData(data){
-
-  try{
-
-    localStorage.setItem(
-      'safeguard:lastAlerts',
-      JSON.stringify({
-        savedAt:Date.now(),
-        data
-      })
-    );
-
-  }catch{}
-
-}
-
-
-function loadLocalData(){
-
-  try{
-
-    const raw =
-      localStorage.getItem(
-        'safeguard:lastAlerts'
-      );
-
-    if(!raw)
-      return null;
-
-    const parsed =
-      JSON.parse(raw);
-
-    if(
-      !parsed ||
-      !parsed.data ||
-      !Array.isArray(parsed.data.alerts)
-    )
-      return null;
-
-    return parsed;
-
-  }catch{
-
-    return null;
-
-  }
-
-}
-
-
-/* ============================================================
-   STATUS
-   ============================================================ */
-
-function setStatus(
-  mode,
-  text
-){
-
-  statusText.textContent =
-    text;
-
-  statusDot.className =
-    'status-dot ' + mode;
-
-}
-
-
-function showLoader(
-  visible,
-  text='Завантаження...'
-){
-
-  loaderText.textContent =
-    text;
-
-  loader.classList.toggle(
-    'show',
-    visible
-  );
-
-}
-
-
-/* ============================================================
-   ALERTS SYNC
-   ============================================================ */
-
-async function syncAlerts(){
-
-  if(syncRunning)
-    return;
-
-  syncRunning = true;
-
-  setStatus(
-    'loading',
-    'СИНХРОНІЗАЦІЯ...'
-  );
-
-  showLoader(
-    true,
-    'Отримання актуальних даних...'
-  );
-
-  try{
-
-    const data =
-      await fetchAlerts();
-
-    alerts =
-      Array.isArray(data.alerts)
-        ? data.alerts
-        : [];
-
-    lastSuccessfulSync =
-      Date.now();
-
-    saveLocalData(data);
-
-    setStatus(
-      '',
-      'СИСТЕМА ОНЛАЙН (alerts.in.ua)'
-    );
-
-    lastSync.textContent =
-      formatTime(lastSuccessfulSync);
-
-    renderEverything();
-
-  }catch(error){
-
-    console.warn(
-      'Alerts API:',
-      error
-    );
-
-    const cached =
-      loadLocalData();
-
-    if(cached){
-
-      alerts =
-        cached.data.alerts;
-
-      const age =
-        Date.now() -
-        cached.savedAt;
-
-      setStatus(
-        'offline',
-        'АВТОНОМНИЙ РЕЖИМ (кеш)'
-      );
-
-      lastSync.textContent =
-        `кеш ${formatTime(cached.savedAt)}`;
-
-      renderEverything();
-
-      showLoader(
-        false
-      );
-
-    }else{
-
-      alerts = [];
-
-      setStatus(
-        'offline',
-        'API НЕДОСТУПНЕ'
-      );
-
-      lastSync.textContent =
-        'даних немає';
-
-      renderEverything();
-
-    }
-
-  }finally{
-
-    syncRunning = false;
-
-    showLoader(false);
-
-  }
-
-}
-
-
-/* ============================================================
-   FILTER
-   ============================================================ */
-
-function getVisibleAlerts(){
-
-  if(currentFilter === 'red'){
-
-    return alerts.filter(
-      a => a.alert_level === 'red'
-    );
-
-  }
-
-  if(currentFilter === 'yellow'){
-
-    return alerts.filter(
-      a => a.alert_level === 'yellow'
-    );
-
-  }
-
-  return alerts;
-
-}
-
-
-/* ============================================================
-   ALERT UI
-   ============================================================ */
-
-function renderAlerts(){
-
-  const red =
-    alerts.filter(
-      a => a.alert_level === 'red'
-    ).length;
-
-  const yellow =
-    alerts.filter(
-      a => a.alert_level === 'yellow'
-    ).length;
-
-  countRed.textContent =
-    red;
-
-  countYellow.textContent =
-    yellow;
-
-  countAll.textContent =
-    alerts.length;
-
-  const visible =
-    getVisibleAlerts();
-
-  alertList.innerHTML = '';
-
-  if(!visible.length){
-
-    alertList.innerHTML = `
-      <div class="empty">
-        Активних сповіщень не знайдено
-      </div>
-    `;
-
-    return;
-
-  }
-
-  visible.forEach(alert => {
-
-    const info =
-      getThreatInfo(alert);
-
-    const card =
-      document.createElement('div');
-
-    card.className =
-      `alert-card ${info.cls}`;
-
-    const started =
-      formatTime(
-        alert.started_at
-      );
-
-    const duration =
-      formatDuration(
-        alert.started_at
-      );
-
-    const oblast =
-      alert.location_oblast || '';
-
-    const raion =
-      alert.location_raion || '';
-
-    card.innerHTML = `
-
-      <div class="alert-head">
-
-        <span class="alert-name">
-          ${escapeHtml(
-            alert.location_title ||
-            'Невідомий регіон'
-          )}
-        </span>
-
-        <span class="badge ${info.badgeClass}">
-          ${escapeHtml(info.badge)}
-        </span>
-
-      </div>
-
-      <div class="alert-action ${
-        alert.alert_level === 'yellow'
-          ? 'yellow'
-          : 'red'
-      }">
-
-        ${
-          alert.alert_level === 'yellow'
-            ? '🟡 Підвищена увага'
-            : '🔴 НЕГАЙНО В УКРИТТЯ!'
-        }
-
-      </div>
-
-      <div class="alert-meta">
-
-        <span>
-          ${escapeHtml(oblast)}
-          ${raion ? ' · ' + escapeHtml(raion) : ''}
-        </span>
-
-        <span>
-          Початок: ${started}
-        </span>
-
-      </div>
-
-      ${
-        duration
-          ? `
-            <div class="alert-meta">
-              <span>
-                Тривалість: ${duration}
-              </span>
-            </div>
-          `
-          : ''
-      }
-
-    `;
-
-    card.addEventListener(
-      'click',
-      () => focusAlert(alert)
-    );
-
-    alertList.appendChild(card);
-
-  });
-
-}
-
-
-/* ============================================================
-   FOCUS ALERT
-   ============================================================ */
-
-function focusAlert(alert){
-
-  const lat =
-    Number(alert.latitude);
-
-  const lng =
-    Number(alert.longitude);
-
-  if(
-    Number.isFinite(lat) &&
-    Number.isFinite(lng)
-  ){
-
-    map.flyTo(
-      [lat,lng],
-      9,
-      {duration:.7}
-    );
-
-    return;
-
-  }
-
-  const centers = {
-
-    'Київська область':
-      [50.45,30.52],
-
-    'Чернігівська область':
-      [51.49,31.29],
-
-    'Сумська область':
-      [50.91,34.80],
-
-    'Харківська область':
-      [49.99,36.23],
-
-    'Донецька область':
-      [48.02,37.80],
-
-    'Луганська область':
-      [48.57,39.31],
-
-    'Дніпропетровська область':
-      [48.46,35.05],
-
-    'Запорізька область':
-      [47.84,35.14],
-
-    'Одеська область':
-      [46.48,30.72],
-
-    'Миколаївська область':
-      [46.97,32.00],
-
-    'Херсонська область':
-      [46.64,32.62],
-
-    'Полтавська область':
-      [49.59,34.55],
-
-    'Черкаська область':
-      [49.44,32.06],
-
-    'Вінницька область':
-      [49.23,28.47],
-
-    'Житомирська область':
-      [50.25,28.66],
-
-    'Волинська область':
-      [50.75,25.33],
-
-    'Рівненська область':
-      [50.62,26.25],
-
-    'Львівська область':
-      [49.84,24.03],
-
-    'Закарпатська область':
-      [48.62,22.30],
-
-    'Івано-Франківська область':
-      [48.92,24.71],
-
-    'Тернопільська область':
-      [49.55,25.59],
-
-    'Хмельницька область':
-      [49.42,27.00],
-
-    'Чернівецька область':
-      [48.29,25.94],
-
-    'Кіровоградська область':
-      [48.51,32.26],
-
-    'Автономна Республіка Крим':
-      [45.00,34.10]
-
-  };
-
-  const point =
-    centers[
-      alert.location_oblast ||
-      alert.location_title
-    ];
-
-  if(point){
-
-    map.flyTo(
-      point,
-      8,
-      {duration:.7}
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   GEOJSON PROPERTY NAME
-   ============================================================ */
 
 function featureName(feature){
-
-  const p =
-    feature?.properties || {};
-
-  return (
-    p.name ||
-    p.NAME ||
-    p.Name ||
-    p.region ||
-    p.region_name ||
-    p.raion ||
-    p.raion_name ||
-    p.hromada ||
-    p.hromada_name ||
-    p.title ||
-    p.NAME_UA ||
-    ''
-  );
-
+  const p = feature?.properties || {};
+  return p.name || p.NAME || p.Name || p.region || p.region_name || p.raion || p.raion_name || p.hromada || p.hromada_name || p.title || p.NAME_UA || '';
 }
 
+function featureOblast(feature){
+  const p = feature?.properties || {};
+  return p.region || p.region_name || p.oblast || p.NAME_1 || '';
+}
+
+/* ============================================================
+   MATCHING ALERTS
+   ============================================================ */
+
+function getAlertForFeature(feature, geoMode){
+  const name = normalizeName(featureName(feature));
+  const oblName = normalizeName(featureOblast(feature));
+
+  if(!name) return null;
+
+  // 1. Точное совпадение по названию объекта
+  let found = alerts.find(a => normalizeName(a.location_title) === name || normalizeName(a.location_raion) === name);
+  if(found) return found;
+
+  // 2. Частичное совпадение названий
+  found = alerts.find(a => {
+    const target = normalizeName(a.location_title);
+    return target && (target.includes(name) || name.includes(target));
+  });
+  if(found) return found;
+
+  // 3. Если смотрим районы/громады — наследуем тревогу всей области
+  if(geoMode !== 'oblast' && oblName){
+    found = alerts.find(a => normalizeName(a.location_title) === oblName || normalizeName(a.location_oblast) === oblName);
+  }
+
+  return found || null;
+}
 
 /* ============================================================
    GEOJSON LOAD
    ============================================================ */
 
-async function loadGeo(
-  mode
-){
+async function loadGeo(mode){
+  if(currentGeoData[mode]) return currentGeoData[mode];
 
-  if(currentGeoData[mode])
-    return currentGeoData[mode];
+  const response = await fetch(GEO_URLS[mode], { cache:'force-cache' });
+  if(!response.ok) throw new Error(`GeoJSON ${mode}: ${response.status}`);
 
-  const response =
-    await fetch(
-      GEO_URLS[mode],
-      {
-        cache:'force-cache'
-      }
-    );
-
-  if(!response.ok){
-
-    throw new Error(
-      `GeoJSON ${mode}: ${response.status}`
-    );
-
-  }
-
-  const data =
-    await response.json();
-
-  currentGeoData[mode] =
-    data;
-
+  const data = await response.json();
+  currentGeoData[mode] = data;
   return data;
-
 }
 
-
 /* ============================================================
-   MAP COLOR
-   ============================================================ */
-
-function getAlertForFeature(
-  feature
-){
-
-  const name =
-    normalizeName(
-      featureName(feature)
-    );
-
-  if(!name)
-    return null;
-
-  let found =
-    alerts.find(
-      a =>
-        normalizeName(
-          a.location_title
-        ) === name
-    );
-
-  if(found)
-    return found;
-
-  found =
-    alerts.find(
-      a =>
-        normalizeName(
-          a.location_oblast
-        ) === name
-    );
-
-  return found || null;
-
-}
-
-
-/* ============================================================
-   RENDER MAP (ИСПРАВЛЕНО: НЕ ПЕРЕЗАПИСЫВАЕТ currentMode)
+   RENDER MAP
    ============================================================ */
 
 async function renderMap(){
-
   geoLayer.clearLayers();
-
-  // Использовать геометрию 'oblast' для динамического режима без изменения currentMode
-  const activeGeoMode = (currentMode === 'dynamic') ? 'oblast' : currentMode;
+  overlayLayer.clearLayers();
 
   try{
+    showLoader(true, `Завантаження ${currentMode}...`);
 
-    showLoader(
-      true,
-      `Завантаження ${activeGeoMode}...`
-    );
+    if(currentMode === 'dynamic'){
+      // 1. Рисуем базовый слой областей
+      const oblGeo = await loadGeo('oblast');
+      const oblLayer = L.geoJSON(oblGeo, {
+        style: feature => {
+          const name = normalizeName(featureName(feature));
+          const alert = alerts.find(a => normalizeName(a.location_title) === name || normalizeName(a.location_oblast) === name);
 
-    const geo =
-      await loadGeo(
-        activeGeoMode
-      );
-
-    const layer =
-      L.geoJSON(
-        geo,
-        {
-
-          style: feature => {
-
-            const alert =
-              getAlertForFeature(
-                feature
-              );
-
-            if(!alert){
-
-              return {
-
-                color:
-                  activeGeoMode === 'oblast'
-                    ? '#38bdf8'
-                    : '#00a9d0',
-
-                weight:
-                  activeGeoMode === 'oblast'
-                    ? 1.1
-                    : .8,
-
-                opacity:.5,
-
-                fillColor:'#00d4ff',
-
-                fillOpacity:.025
-
-              };
-
-            }
-
-            const isYellow =
-              alert.alert_level === 'yellow';
-
-            return {
-
-              color:
-                isYellow
-                  ? '#a16207'
-                  : '#991b1b',
-
-              weight:
-                activeGeoMode === 'oblast'
-                  ? 2
-                  : 1.5,
-
-              opacity:.95,
-
-              fillColor:
-                isYellow
-                  ? '#ffd000'
-                  : '#ff3045',
-
-              fillOpacity:
-                activeGeoMode === 'oblast'
-                  ? .48
-                  : .42
-
-            };
-
-          },
-
-          onEachFeature:
-            (feature, layer) => {
-
-              const name =
-                featureName(feature);
-
-              const alert =
-                getAlertForFeature(
-                  feature
-                );
-
-              layer.bindTooltip(
-                `
-                  <strong>
-                    ${escapeHtml(name)}
-                  </strong>
-                  ${
-                    alert
-                      ? `<br>
-                         <span style="color:${
-                           alert.alert_level === 'yellow'
-                             ? '#ffd000'
-                             : '#ff3045'
-                         }">
-                           ● ${
-                             alert.alert_level === 'yellow'
-                               ? 'ЖОВТИЙ'
-                               : 'ЧЕРВОНИЙ'
-                           }
-                         </span>`
-                      : ''
-                  }
-                `,
-                {
-                  className:
-                    'safeguard'
-                }
-              );
-
-              layer.on(
-                'click',
-                () => {
-
-                  if(alert){
-
-                    focusAlert(
-                      alert
-                    );
-
-                  }
-
-                }
-              );
-
-            }
-
+          if(!alert){
+            return { color: '#38bdf8', weight: 1.1, opacity: .5, fillColor: '#00d4ff', fillOpacity: .025 };
+          }
+          const isYellow = alert.alert_level === 'yellow';
+          return {
+            color: isYellow ? '#a16207' : '#991b1b',
+            weight: 2, opacity: .95,
+            fillColor: isYellow ? '#ffd000' : '#ff3045',
+            fillOpacity: .48
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          bindFeatureTooltip(feature, layer);
         }
-      );
+      });
+      geoLayer.addLayer(oblLayer);
 
-    geoLayer.addLayer(layer);
+      // 2. Если есть тревоги в районах/громадах — накладываем их сверху!
+      const localAlerts = alerts.filter(a => a.location_type === 'raion' || a.location_type === 'hromada');
+      if(localAlerts.length > 0){
+        const hromadaGeo = await loadGeo('hromada');
+        const overlay = L.geoJSON(hromadaGeo, {
+          filter: feature => {
+            const name = normalizeName(featureName(feature));
+            return localAlerts.some(a => normalizeName(a.location_title) === name);
+          },
+          style: feature => {
+            const name = normalizeName(featureName(feature));
+            const alert = localAlerts.find(a => normalizeName(a.location_title) === name);
+            const isYellow = alert?.alert_level === 'yellow';
+            return {
+              color: isYellow ? '#ffd000' : '#ff3045',
+              weight: 2, opacity: 1,
+              fillColor: isYellow ? '#ffd000' : '#ff3045',
+              fillOpacity: .85
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            bindFeatureTooltip(feature, layer);
+          }
+        });
+        overlayLayer.addLayer(overlay);
+      }
+
+    } else {
+      // Прямой режим: Области, Районы или Громады
+      const geo = await loadGeo(currentMode);
+      const layer = L.geoJSON(geo, {
+        style: feature => {
+          const alert = getAlertForFeature(feature, currentMode);
+          if(!alert){
+            return {
+              color: currentMode === 'oblast' ? '#38bdf8' : '#00a9d0',
+              weight: currentMode === 'oblast' ? 1.1 : .8,
+              opacity: .5, fillColor: '#00d4ff', fillOpacity: .025
+            };
+          }
+          const isYellow = alert.alert_level === 'yellow';
+          return {
+            color: isYellow ? '#a16207' : '#991b1b',
+            weight: currentMode === 'oblast' ? 2 : 1.4,
+            opacity: .95,
+            fillColor: isYellow ? '#ffd000' : '#ff3045',
+            fillOpacity: currentMode === 'oblast' ? .48 : .42
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          bindFeatureTooltip(feature, layer);
+        }
+      });
+      geoLayer.addLayer(layer);
+    }
 
   }catch(error){
-
-    console.warn(
-      'GeoJSON:',
-      error
-    );
-
+    console.warn('GeoJSON:', error);
   }finally{
-
     showLoader(false);
+  }
+}
 
+function bindFeatureTooltip(feature, layer){
+  const name = featureName(feature);
+  const alert = getAlertForFeature(feature, currentMode);
+
+  layer.bindTooltip(`
+    <strong>${escapeHtml(name)}</strong>
+    ${alert ? `<br><span style="color:${alert.alert_level === 'yellow' ? '#ffd000' : '#ff3045'}">● ${alert.alert_level === 'yellow' ? 'ЖОВТИЙ' : 'ЧЕРВОНИЙ'}</span>` : ''}
+  `, { className: 'safeguard' });
+
+  layer.on('click', () => { if(alert) focusAlert(alert); });
+}
+
+/* ============================================================
+   API & SYNC
+   ============================================================ */
+
+async function fetchAlerts(){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try{
+    const response = await fetch(API_PROXY_URL, {
+      method:'GET', cache:'no-store', signal:controller.signal, headers:{ 'Accept':'application/json' }
+    });
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if(!data || !Array.isArray(data.alerts)) throw new Error('Некоректна відповідь API');
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function syncAlerts(){
+  if(syncRunning) return;
+  syncRunning = true;
+
+  setStatus('loading', 'СИНХРОНІЗАЦІЯ...');
+  showLoader(true, 'Отримання актуальних даних...');
+
+  try{
+    const data = await fetchAlerts();
+    alerts = Array.isArray(data.alerts) ? data.alerts : [];
+    lastSuccessfulSync = Date.now();
+
+    setStatus('', 'СИСТЕМА ОНЛАЙН (alerts.in.ua)');
+    lastSync.textContent = formatTime(lastSuccessfulSync);
+    renderEverything();
+
+  }catch(error){
+    console.warn('Alerts API:', error);
+    setStatus('offline', 'API НЕДОСТУПНЕ');
+    lastSync.textContent = 'помилка';
+    renderEverything();
+  }finally{
+    syncRunning = false;
+    showLoader(false);
+  }
+}
+
+/* ============================================================
+   UI RENDER
+   ============================================================ */
+
+function getThreatInfo(alert){
+  const type = alert.alert_type || 'air_raid';
+  switch(type){
+    case 'artillery_shelling': return { cls:'artillery', badge:'АРТА / ОБСТРІЛ', badgeClass:'orange' };
+    case 'urban_fights': return { cls:'urban', badge:'ВУЛИЧНІ БОЇ', badgeClass:'pink' };
+    case 'chemical': return { cls:'chemical', badge:'ХІМІЧНА', badgeClass:'lime' };
+    case 'nuclear': return { cls:'nuclear', badge:'☢ ЯДЕРНА', badgeClass:'nuclear' };
+    default:
+      if(alert.alert_level === 'yellow') return { cls:'yellow', badge:'🟡 ЖОВТИЙ', badgeClass:'yellow' };
+      return { cls:'red', badge:'🔴 ЧЕРВОНИЙ', badgeClass:'red' };
+  }
+}
+
+function getVisibleAlerts(){
+  if(currentFilter === 'red') return alerts.filter(a => a.alert_level === 'red');
+  if(currentFilter === 'yellow') return alerts.filter(a => a.alert_level === 'yellow');
+  return alerts;
+}
+
+function renderAlerts(){
+  countRed.textContent = alerts.filter(a => a.alert_level === 'red').length;
+  countYellow.textContent = alerts.filter(a => a.alert_level === 'yellow').length;
+  countAll.textContent = alerts.length;
+
+  const visible = getVisibleAlerts();
+  alertList.innerHTML = '';
+
+  if(!visible.length){
+    alertList.innerHTML = `<div class="empty">Активних сповіщень не знайдено</div>`;
+    return;
   }
 
+  visible.forEach(alert => {
+    const info = getThreatInfo(alert);
+    const card = document.createElement('div');
+    card.className = `alert-card ${info.cls}`;
+
+    card.innerHTML = `
+      <div class="alert-head">
+        <span class="alert-name">${escapeHtml(alert.location_title || 'Невідомий регіон')}</span>
+        <span class="badge ${info.badgeClass}">${escapeHtml(info.badge)}</span>
+      </div>
+      <div class="alert-action ${alert.alert_level === 'yellow' ? 'yellow' : 'red'}">
+        ${alert.alert_level === 'yellow' ? '🟡 Підвищена увага' : '🔴 НЕГАЙНО В УКРИТТЯ!'}
+      </div>
+      <div class="alert-meta">
+        <span>${escapeHtml(alert.location_oblast || '')} ${alert.location_raion ? ' · ' + escapeHtml(alert.location_raion) : ''}</span>
+        <span>Початок: ${formatTime(alert.started_at)}</span>
+      </div>
+    `;
+
+    card.addEventListener('click', () => focusAlert(alert));
+    alertList.appendChild(card);
+  });
 }
 
+function focusAlert(alert){
+  const centers = {
+    'Київська область': [50.45,30.52], 'Чернігівська область': [51.49,31.29],
+    'Сумська область': [50.91,34.80], 'Харківська область': [49.99,36.23],
+    'Донецька область': [48.02,37.80], 'Луганська область': [48.57,39.31],
+    'Дніпропетровська область': [48.46,35.05], 'Запорізька область': [47.84,35.14],
+    'Одеська область': [46.48,30.72], 'Миколаївська область': [46.97,32.00],
+    'Херсонська область': [46.64,32.62], 'Полтавська область': [49.59,34.55],
+    'Черкаська область': [49.44,32.06], 'Вінницька область': [49.23,28.47],
+    'Житомирська область': [50.25,28.66], 'Волинська область': [50.75,25.33],
+    'Рівненська область': [50.62,26.25], 'Львівська область': [49.84,24.03],
+    'Закарпатська область': [48.62,22.30], 'Івано-Франківська область': [48.92,24.71],
+    'Тернопільська область': [49.55,25.59], 'Хмельницька область': [49.42,27.00],
+    'Чернівецька область': [48.29,25.94], 'Кіровоградська область': [48.51,32.26],
+    'Автономна Республіка Крим': [45.00,34.10]
+  };
 
-/* ============================================================
-   MODE
-   ============================================================ */
+  const point = centers[alert.location_oblast || alert.location_title];
+  if(point) map.flyTo(point, 8, {duration:.7});
+}
 
-async function setMode(
-  mode
-){
+function setStatus(mode, text){
+  statusText.textContent = text;
+  statusDot.className = 'status-dot ' + mode;
+}
 
-  currentMode =
-    mode;
+function showLoader(visible, text='Завантаження...'){
+  loaderText.textContent = text;
+  loader.classList.toggle('show', visible);
+}
 
-  document
-    .querySelectorAll('.mode')
-    .forEach(button => {
-
-      button.classList.toggle(
-        'active',
-        button.dataset.mode === mode
-      );
-
-    });
-
-  modeLabel.textContent =
-    mode === 'dynamic'
-      ? 'ДИНАМІЧНЕ'
-      : mode.toUpperCase();
-
+async function setMode(mode){
+  currentMode = mode;
+  document.querySelectorAll('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  modeLabel.textContent = mode === 'dynamic' ? 'ДИНАМІЧНЕ' : mode.toUpperCase();
   await renderMap();
-
 }
-
-
-/* ============================================================
-   FULL RENDER
-   ============================================================ */
 
 function renderEverything(){
-
   renderAlerts();
-
   renderMap();
-
 }
 
-
 /* ============================================================
-   TABS
+   EVENTS & CONTROLS
    ============================================================ */
 
-document
-  .querySelectorAll('.tab')
-  .forEach(button => {
-
-    button.addEventListener(
-      'click',
-      () => {
-
-        const tab =
-          button.dataset.tab;
-
-        document
-          .querySelectorAll('.tab')
-          .forEach(x =>
-            x.classList.toggle(
-              'active',
-              x === button
-            )
-          );
-
-        document
-          .querySelectorAll('.tab-content')
-          .forEach(content => {
-
-            content.classList.toggle(
-              'active',
-              content.id ===
-                `tab-${tab}`
-            );
-
-          });
-
-        if(tab === 'hazards'){
-
-          loadEarthquakes();
-
-        }
-
-      }
-    );
-
+document.querySelectorAll('.tab').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${b.dataset.tab}`));
+    if(b.dataset.tab === 'hazards') loadEarthquakes();
   });
+});
 
-
-/* ============================================================
-   FILTER BUTTONS
-   ============================================================ */
-
-document
-  .querySelectorAll('.filter')
-  .forEach(button => {
-
-    button.addEventListener(
-      'click',
-      () => {
-
-        currentFilter =
-          button.dataset.filter;
-
-        document
-          .querySelectorAll('.filter')
-          .forEach(x =>
-            x.classList.toggle(
-              'active',
-              x === button
-            )
-          );
-
-        renderAlerts();
-
-      }
-    );
-
+document.querySelectorAll('.filter').forEach(b => {
+  b.addEventListener('click', () => {
+    currentFilter = b.dataset.filter;
+    document.querySelectorAll('.filter').forEach(x => x.classList.toggle('active', x === b));
+    renderAlerts();
   });
+});
 
+$('redCard').addEventListener('click', () => { currentFilter = 'red'; renderAlerts(); });$('yellowCard').addEventListener('click', () => { currentFilter = 'yellow'; renderAlerts(); });
 
-$('redCard')
-  .addEventListener(
-    'click',
-    () => {
+document.querySelectorAll('.mode').forEach(b => {
+  b.addEventListener('click', () => setMode(b.dataset.mode));
+});
 
-      currentFilter =
-        'red';
-
-      document
-        .querySelectorAll('.filter')
-        .forEach(x =>
-          x.classList.toggle(
-            'active',
-            x.dataset.filter === 'red'
-          )
-        );
-
-      renderAlerts();
-
-    }
-  );
-
-
-$('yellowCard')
-  .addEventListener(
-    'click',
-    () => {
-
-      currentFilter =
-        'yellow';
-
-      document
-        .querySelectorAll('.filter')
-        .forEach(x =>
-          x.classList.toggle(
-            'active',
-            x.dataset.filter === 'yellow'
-          )
-        );
-
-      renderAlerts();
-
-    }
-  );
-
-
-/* ============================================================
-   MAP MODE BUTTONS
-   ============================================================ */
-
-document
-  .querySelectorAll('.mode')
-  .forEach(button => {
-
-    button.addEventListener(
-      'click',
-      () => {
-
-        setMode(
-          button.dataset.mode
-        );
-
-      }
-    );
-
-  });
-
-
-/* ============================================================
-   AUDIO
-   ============================================================ */
-
-function speak(text){
-
-  if(!soundEnabled)
-    return;
-
-  if(
-    !('speechSynthesis' in window)
-  )
-    return;
-
-  window.speechSynthesis.cancel();
-
-  const utterance =
-    new SpeechSynthesisUtterance(
-      text
-    );
-
-  utterance.lang =
-    'uk-UA';
-
-  utterance.rate =
-    .92;
-
-  utterance.pitch =
-    1;
-
-  window.speechSynthesis.speak(
-    utterance
-  );
-
-}
-
-
-$('testRed')
-  .addEventListener(
-    'click',
-    () => {
-
-      speak(
-        'Увага. Червоний рівень небезпеки. Негайно пройдіть в укриття.'
-      );
-
-    }
-  );
-
-
-$('testYellow')
-  .addEventListener(
-    'click',
-    () => {
-
-      speak(
-        'Увага. Жовтий рівень небезпеки. Підвищена увага.'
-      );
-
-    }
-  );
-
-
-$('testClear')
-  .addEventListener(
-    'click',
-    () => {
-
-      speak(
-        'Увага. Відбій тривоги.'
-      );
-
-    }
-  );
-
-
-$('toggleSound')
-  .addEventListener(
-    'click',
-    event => {
-
-      soundEnabled =
-        !soundEnabled;
-
-      event.target.textContent =
-        soundEnabled
-          ? '🔊 Звук: увімкнено'
-          : '🔇 Звук: вимкнено';
-
-      if(!soundEnabled &&
-         'speechSynthesis' in window){
-
-        speechSynthesis.cancel();
-
-      }
-
-    }
-  );
-
-
-/* ============================================================
-   MANUAL REFRESH
-   ============================================================ */
-
-$('refresh')
-  .addEventListener(
-    'click',
-    () => {
-
-      syncAlerts();
-
-    }
-  );
-
-
-/* ============================================================
-   CLOCK
-   ============================================================ */
+$('refresh').addEventListener('click', () => syncAlerts());
 
 function updateClock(){
-
-  $('clock').textContent =
-    new Intl.DateTimeFormat(
-      'uk-UA',
-      {
-        timeZone:'Europe/Kyiv',
-        hour:'2-digit',
-        minute:'2-digit',
-        second:'2-digit'
-      }
-    ).format(
-      new Date()
-    ) +
-    ' (Київ)';
-
+  $('clock').textContent = new Intl.DateTimeFormat('uk-UA', {
+    timeZone:'Europe/Kyiv', hour:'2-digit', minute:'2-digit', second:'2-digit'
+  }).format(new Date()) + ' (Київ)';
 }
-
-setInterval(
-  updateClock,
-  1000
-);
-
-updateClock();
-
+setInterval(updateClock, 1000); updateClock();
 
 /* ============================================================
-   USGS EARTHQUAKES
+   USGS
    ============================================================ */
 
 async function loadEarthquakes(){
-
   try{
-
-    $('hazardStatus').textContent =
-      '● Завантаження USGS...';
-
-    $('hazardStatus').className =
-      '';
-
-    const response =
-      await fetch(
-        USGS_URL,
-        {
-          cache:'no-store'
-        }
-      );
-
-    if(!response.ok)
-      throw new Error(
-        `USGS ${response.status}`
-      );
-
-    const data =
-      await response.json();
-
+    $('hazardStatus').textContent = '● Завантаження USGS...';
+    const response = await fetch(USGS_URL, { cache:'no-store' });
+    if(!response.ok) throw new Error(`USGS ${response.status}`);
+    const data = await response.json();
     quakeLayer.clearLayers();
 
-    const features =
-      Array.isArray(data.features)
-        ? data.features
-        : [];
-
+    const features = Array.isArray(data.features) ? data.features : [];
     if(!features.length){
-
-      $('hazardStatus').textContent =
-        '● Значущих сейсмічних подій не знайдено';
-
-      $('hazardStatus').className =
-        'ok';
-
-      $('hazardList').innerHTML =
-        `
-        <div class="empty">
-          Подій немає
-        </div>
-        `;
-
+      $('hazardStatus').textContent = '● Значущих сейсмічних подій не знайдено';
+      $('hazardList').innerHTML = `<div class="empty">Подій немає</div>`;
       return;
-
     }
 
-    $('hazardStatus').textContent =
-      `● Подій: ${features.length}`;
+    $('hazardStatus').textContent = `● Подій: ${features.length}`;
+    $('hazardList').innerHTML = '';
 
-    $('hazardStatus').className =
-      'ok';
+    features.slice(0,15).forEach(f => {
+      const p = f.properties || {};
+      const coords = f.geometry?.coordinates || [];
+      const mag = Number(p.mag || 0);
 
-    $('hazardList').innerHTML =
-      '';
+      if(Number.isFinite(coords[1]) && Number.isFinite(coords[0])){
+        const marker = L.marker([coords[1], coords[0]], {
+          icon: L.divIcon({
+            className:'',
+            html:`<div style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;border:2px solid white;display:flex;align-items:center;justify-content:center;color:white;font:bold 10px JetBrains Mono;">${mag.toFixed(1)}</div>`
+          })
+        });
+        quakeLayer.addLayer(marker);
+      }
 
-    features
-      .slice(0,15)
-      .forEach(feature => {
-
-        const p =
-          feature.properties || {};
-
-        const coords =
-          feature.geometry?.coordinates || [];
-
-        const lng =
-          coords[0];
-
-        const lat =
-          coords[1];
-
-        const mag =
-          Number(p.mag || 0);
-
-        if(
-          Number.isFinite(lat) &&
-          Number.isFinite(lng)
-        ){
-
-          const size =
-            Math.max(
-              22,
-              Math.min(
-                42,
-                20 + mag * 7
-              )
-            );
-
-          const icon =
-            L.divIcon({
-              className:'',
-              html:`
-                <div style="
-                  width:${size}px;
-                  height:${size}px;
-                  border-radius:50%;
-                  background:#8b5cf6;
-                  border:2px solid white;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  color:white;
-                  font:bold 10px JetBrains Mono;
-                  box-shadow:0 0 14px rgba(139,92,246,.8);
-                ">
-                  ${mag.toFixed(1)}
-                </div>
-              `,
-              iconSize:[
-                size,
-                size
-              ],
-              iconAnchor:[
-                size/2,
-                size/2
-              ]
-            });
-
-          const marker =
-            L.marker(
-              [lat,lng],
-              {icon}
-            );
-
-          marker.bindPopup(`
-            <strong>
-              ${escapeHtml(
-                p.place || 'Сейсмічна подія'
-              )}
-            </strong>
-            <br>
-            Магнітуда:
-            ${mag.toFixed(1)}
-            <br>
-            ${p.time
-              ? new Date(p.time)
-                  .toLocaleString('uk-UA')
-              : ''}
-          `);
-
-          quakeLayer.addLayer(
-            marker
-          );
-
-        }
-
-
-        const item =
-          document.createElement('div');
-
-        item.className =
-          'hazard';
-
-        item.innerHTML = `
-          <strong>
-            M${mag.toFixed(1)}
-            —
-            ${escapeHtml(
-              p.place || 'Невідоме місце'
-            )}
-          </strong>
-
-          <small>
-            ${
-              p.time
-                ? new Date(
-                    p.time
-                  ).toLocaleString(
-                    'uk-UA'
-                  )
-                : ''
-            }
-          </small>
-        `;
-
-        $('hazardList')
-          .appendChild(item);
-
-      });
-
-  }catch(error){
-
-    console.warn(
-      'USGS:',
-      error
-    );
-
-    $('hazardStatus').textContent =
-      '● USGS тимчасово недоступний';
-
-    $('hazardStatus').className =
-      'warning';
-
-    $('hazardList').innerHTML =
-      `
-      <div class="empty">
-        Не вдалося отримати дані USGS.
-      </div>
-      `;
-
+      const item = document.createElement('div');
+      item.className = 'hazard';
+      item.innerHTML = `<strong>M${mag.toFixed(1)} — ${escapeHtml(p.place || 'Невідомо')}</strong><small>${p.time ? new Date(p.time).toLocaleString('uk-UA') : ''}</small>`;
+      $('hazardList').appendChild(item);
+    });
+  }catch(e){
+    $('hazardStatus').textContent = '● USGS тимчасово недоступний';
   }
-
 }
 
-
 /* ============================================================
-   INITIAL
+   INIT
    ============================================================ */
 
 (async function(){
-
   await loadGeo('oblast');
-
   await syncAlerts();
-
 })();
 
-
-/*
- * Обновление каждые 60 секунд.
- */
-
-setInterval(
-  syncAlerts,
-  60000
-);
-
-
-/*
- * USGS обновляем раз в 5 минут.
- */
-
-setInterval(
-  loadEarthquakes,
-  300000
-);
+setInterval(syncAlerts, 60000);
+setInterval(loadEarthquakes, 300000);
 
 </script>
-
 </body>
 </html>
