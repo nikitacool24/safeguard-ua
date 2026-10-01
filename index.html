@@ -1052,7 +1052,7 @@
         return {
           isRed: true, isYellow: false, isSpecific: true,
           fillColor: '#a3e635', color: '#65a30d',
-          badgeText: '☣️️ ХІМІЧНА',
+          badgeText: '☣ ХІМІЧНА',
           badgeClass: 'badge-chemical',
           cardClass: 'card-threat-chemical',
           actionNoteClass: 'chemical',
@@ -1134,6 +1134,7 @@
        3. Web Audio API — Звукові сигнали сирени та диктор
        ========================================================================== */
     let audioCtx = null;
+
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1143,6 +1144,20 @@
       }
       return audioCtx;
     }
+
+    // Автоматичне розблокування аудіоконтексту після першого кліку/дотику користувача
+    function unlockAudioContext() {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      window.removeEventListener('click', unlockAudioContext);
+      window.removeEventListener('touchstart', unlockAudioContext);
+      window.removeEventListener('keydown', unlockAudioContext);
+    }
+    window.addEventListener('click', unlockAudioContext);
+    window.addEventListener('touchstart', unlockAudioContext);
+    window.addEventListener('keydown', unlockAudioContext);
 
     // 🔴 Червона тривога: пронизливий сигнал тривоги
     function playRedAlertSound() {
@@ -1718,8 +1733,10 @@
 
     /* ==========================================================================
        9. Real-time Опитування alerts.in.ua API через Cloudflare Worker Proxy
+          (З оптимізацією від помилки 429 Too Many Requests)
        ========================================================================== */
     let _syncAbortCtrl = null;
+    let syncTimerId = null;
 
     async function syncAlerts() {
       if (_syncAbortCtrl) _syncAbortCtrl.abort();
@@ -1738,6 +1755,17 @@
         });
         clearTimeout(timeoutId);
 
+        // Обробка 429 Too Many Requests
+        if (resp.status === 429) {
+          console.warn('Отримано 429 (Too Many Requests). Пауза запитів розширена.');
+          if (statusEl) {
+            statusEl.textContent = 'ЛІМІТ ЗАПИТІВ (Очікування...)';
+            statusEl.parentElement.style.color = 'var(--level-yellow)';
+          }
+          scheduleNextSync(45000);
+          return;
+        }
+
         if (resp.ok) {
           const data = await resp.json();
           if (data && Array.isArray(data.alerts)) {
@@ -1748,6 +1776,9 @@
             }
             updateThreatsUI(data.alerts);
             renderMapByCurrentMode();
+
+            // Звичайне оновлення раз на 25 секунд
+            scheduleNextSync(25000);
             return;
           }
         }
@@ -1761,17 +1792,21 @@
         }
         updateThreatsUI(latestAlertsData.alerts || []);
         renderMapByCurrentMode();
+
+        scheduleNextSync(30000);
       }
     }
 
-    // Завантаження контурів та запуск системи
+    function scheduleNextSync(ms) {
+      if (syncTimerId) clearTimeout(syncTimerId);
+      syncTimerId = setTimeout(syncAlerts, ms);
+    }
+
+    // Початковий запуск
     updateThreatsUI(latestAlertsData.alerts || []);
     loadAllGeoData();
     syncAlerts();
     fetchRealNaturalHazards();
-
-    // Опитування кожні 10 секунд
-    setInterval(syncAlerts, 10000);
 
     /* ==========================================================================
        10. Керування та взаємодія з інтерфейсом
