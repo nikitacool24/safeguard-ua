@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SafeGuard UA — Моніторинг рівнів тривог та небезпек України</title>
   
-  <!-- Заглушка для favicon: усуває 404 помилку в консолі браузера -->
+  <!-- Заглушка для favicon -->
   <link rel="icon" href="data:,">
   <meta name="description" content="SafeGuard UA — система оперативного моніторингу рівнів тривог та небезпек України в режимі реального часу.">
   <meta name="theme-color" content="#121212">
@@ -13,7 +13,7 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   
-  <!-- Шрифти: Inter для UI, JetBrains Mono для телеметрії -->
+  <!-- Шрифты: Inter и JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -260,6 +260,121 @@
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    /* --------------------------------------------------------------------------
+       БЛОК: ОФІЦІЙНІ ДЖЕРЕЛА (ПС ЗСУ) — СІТКА КАТЕГОРІЙ
+       -------------------------------------------------------------------------- */
+    .official-sources-card {
+      background: #181b22;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .official-sources-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ps-logo-icon {
+      width: 20px;
+      height: 20px;
+      background: #1e3a8a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f59e0b;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 0 6px rgba(30, 58, 138, 0.6);
+    }
+
+    .official-sources-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-light);
+    }
+
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .source-grid-card {
+      background: #13151a;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      min-height: 82px;
+    }
+
+    .source-grid-card:hover {
+      background: #1e232d;
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+
+    .source-grid-card.active {
+      border-color: var(--cyber-cyan);
+      background: #1a2332;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+    }
+
+    .source-grid-card.pulsing-danger {
+      border: 1px dashed var(--level-red);
+      background: rgba(255, 42, 59, 0.08);
+      animation: card-pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes card-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 42, 59, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(255, 42, 59, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 42, 59, 0); }
+    }
+
+    .source-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .source-card-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-light);
+      line-height: 1.25;
+    }
+
+    .source-card-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      background: var(--border-subtle);
+    }
+
+    .source-grid-card.active .source-card-bar {
+      background: var(--cyber-cyan);
     }
 
     /* --------------------------------------------------------------------------
@@ -593,7 +708,7 @@
       background: #0b0c0e;
     }
 
-    /* HUD Оверлей з детальним поясненням рівнів */
+    /* HUD Оверлей */
     .map-hud-top-right {
       position: absolute;
       top: 14px;
@@ -725,7 +840,7 @@
   <div class="app-viewport">
     
     <!-- ==================================================================== -->
-    <!-- ЛІВА БІЧНА ПАНЕЛЬ                                                   -->
+    <!-- ЛІВА БІЧНА ПАНЕЛЬ                                                    -->
     <!-- ==================================================================== -->
     <aside class="sidebar">
       
@@ -766,9 +881,87 @@
 
         <!-- ================= ТАБ 1: РІВНІ ТРИВОГ ТА ЗАГРОЗИ ================= -->
         <div class="tab-content" id="tab-threats">
+
+          <!-- БЛОК: Офіційні джерела / Повітряні сили ЗСУ -->
+          <div class="official-sources-card">
+            <div class="official-sources-header">
+              <div class="ps-logo-icon">🔱</div>
+              <span class="official-sources-title">Офіційні джерела (Повітряні сили ЗСУ)</span>
+            </div>
+            
+            <div class="sources-grid">
+              <!-- 1. Причини тривог -->
+              <div class="source-grid-card" data-source-filter="air_raid">
+                <div class="source-card-icon" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Причини тривог</span>
+                <div class="source-card-bar" style="background: #eab308;"></div>
+              </div>
+
+              <!-- 2. Потенційні загрози -->
+              <div class="source-grid-card pulsing-danger" data-source-filter="potential">
+                <div class="source-card-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V10h2v2z"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Потенційні загрози</span>
+                <div class="source-card-bar" style="background: #ef4444;"></div>
+              </div>
+
+              <!-- 3. Загроза артобстрілу -->
+              <div class="source-grid-card" data-source-filter="artillery_shelling">
+                <div class="source-card-icon" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="6" cy="18" r="3"/>
+                    <path d="M20.7 4.3c-.4-.4-1-.4-1.4 0l-9.3 9.3 1.4 1.4 9.3-9.3c.4-.4.4-1 0-1.4z" />
+                    <path d="M8 13l3 3 7-7-3-3z"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Загроза артобстрілу</span>
+                <div class="source-card-bar" style="background: #f97316;"></div>
+              </div>
+
+              <!-- 4. Рух ракет -->
+              <div class="source-grid-card" data-source-filter="unspecified_missiles">
+                <div class="source-card-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.5s-4 4.5-4 10.5c0 2.21 1.79 4 4 4s4-1.79 4-4C16 7 12 2.5 12 2.5zm0 18.5c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2z"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Рух ракет</span>
+                <div class="source-card-bar" style="background: #ef4444;"></div>
+              </div>
+
+              <!-- 5. Керовані авіаційні бомби (КАБ) -->
+              <div class="source-grid-card" data-source-filter="kab">
+                <div class="source-card-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8 2 5 6 5 11c0 3.5 2 6 4 8v3h6v-3c2-2 4-4.5 4-8 0-5-3-9-7-9zm0 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Керовані авіаційні бомби</span>
+                <div class="source-card-bar" style="background: #ef4444;"></div>
+              </div>
+
+              <!-- 6. Підвищена небезпека -->
+              <div class="source-grid-card" data-source-filter="urban_fights">
+                <div class="source-card-icon" style="background: rgba(225, 29, 72, 0.15); color: #e11d48;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01"/>
+                  </svg>
+                </div>
+                <span class="source-card-label">Підвищена небезпека</span>
+                <div class="source-card-bar" style="background: #e11d48;"></div>
+              </div>
+            </div>
+          </div>
           
           <!-- Зведена панель рівнів тривоги: ЧЕРВОНИЙ ТА ЖОВТИЙ -->
-          <div class="levels-overview-grid">
+          <div class="levels-overview-grid" style="margin-top: 10px;">
             
             <!-- 🔴 ЧЕРВОНИЙ РІВЕНЬ -->
             <div class="level-stat-card card-red" id="filterRedCard" title="Фільтр: показати тільки Червоний рівень (Ракета)">
@@ -1003,7 +1196,7 @@
     // Вбудований початковий зріз реальних тривог (гарантує миттєвий рендеринг без 0-затримок)
     const INITIAL_ALERTS = {"alerts":[{"id":8757,"location_title":"Луганська область","location_type":"oblast","started_at":"2022-04-04T16:45:39.000Z","finished_at":null,"updated_at":"2023-10-29T18:22:37.357Z","alert_type":"air_raid","location_oblast":"Луганська область","location_uid":"16","notes":null,"country":null,"alert_level":"red","location_title_en":"Luhansk Oblast","location_oblast_uid":16},{"id":28288,"location_title":"Автономна Республіка Крим","location_type":"oblast","started_at":"2022-12-10T22:22:00.000Z","finished_at":null,"updated_at":"2023-10-29T16:56:12.340Z","alert_type":"air_raid","location_oblast":"Автономна Республіка Крим","location_uid":"29","notes":"Згідно інформації з Офіційних карт тривог","country":null,"alert_level":"red","location_title_en":"Autonomous Republic of Crimea","location_oblast_uid":29},{"id":76016,"location_title":"Вовчанська територіальна громада","location_type":"hromada","started_at":"2024-05-20T09:31:37.000Z","finished_at":null,"updated_at":"2024-05-20T09:31:39.351Z","alert_type":"artillery_shelling","location_oblast":"Харківська область","location_uid":"1313","notes":null,"country":null,"alert_level":"red","location_title_en":"Vovchanska terytorialna hromada","location_raion":"Чугуївський район","location_oblast_uid":1313},{"id":76017,"location_title":"Вовчанська територіальна громада","location_type":"hromada","started_at":"2024-05-20T09:31:41.000Z","finished_at":null,"updated_at":"2024-05-20T09:31:44.929Z","alert_type":"urban_fights","location_oblast":"Харківська область","location_uid":"1313","notes":null,"country":null,"alert_level":"red","location_title_en":"Vovchanska terytorialna hromada","location_raion":"Чугуївський район","location_oblast_uid":1313},{"id":185413,"location_title":"Липецька територіальна громада","location_type":"hromada","started_at":"2026-03-10T14:01:38.000Z","finished_at":null,"updated_at":"2026-03-10T14:01:40.240Z","alert_type":"air_raid","location_oblast":"Харківська область","location_uid":"1284","notes":null,"country":null,"alert_level":"red","location_title_en":"Lypetska terytorialna hromada","location_raion":"Харківський район","location_oblast_uid":1284},{"id":252904,"location_title":"Покровська територіальна громада","location_type":"hromada","started_at":"2026-08-29T12:30:13.395Z","finished_at":null,"updated_at":"2026-08-29T12:30:16.572Z","alert_type":"artillery_shelling","location_oblast":"Дніпропетровська область","location_uid":"353","notes":null,"country":null,"alert_level":"red","location_title_en":"Pokrovska terytorialna hromada","location_raion":"Нікопольський район","location_oblast_uid":353},{"id":257385,"location_title":"Червоногригорівська територіальна громада","location_type":"hromada","started_at":"2026-09-07T07:26:02.439Z","finished_at":null,"updated_at":"2026-09-07T07:26:08.649Z","alert_type":"artillery_shelling","location_oblast":"Дніпропетровська область","location_uid":"356","notes":null,"country":null,"alert_level":"red","location_title_en":"Chervonohryhorivska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-07T07:26:02.439Z"}],"location_raion":"Нікопольський район","location_oblast_uid":356},{"id":258032,"location_title":"Липецька територіальна громада","location_type":"hromada","started_at":"2026-09-08T07:11:48.117Z","finished_at":null,"updated_at":"2026-09-08T07:11:49.701Z","alert_type":"artillery_shelling","location_oblast":"Харківська область","location_uid":"1284","notes":null,"country":null,"alert_level":"red","location_title_en":"Lypetska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-08T07:11:48.117Z"}],"location_raion":"Харківський район","location_oblast_uid":1284},{"id":262473,"location_title":"Покровська територіальна громада","location_type":"hromada","started_at":"2026-09-17T10:06:09.751Z","finished_at":null,"updated_at":"2026-09-17T10:06:18.426Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"353","notes":null,"country":null,"alert_level":"red","location_title_en":"Pokrovska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-17T10:06:09.751Z"}],"location_raion":"Нікопольський район","location_oblast_uid":353},{"id":262474,"location_title":"Червоногригорівська територіальна громада","location_type":"hromada","started_at":"2026-09-17T10:06:55.083Z","finished_at":null,"updated_at":"2026-09-17T10:06:58.906Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"356","notes":null,"country":null,"alert_level":"red","location_title_en":"Chervonohryhorivska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-17T10:06:55.083Z"}],"location_raion":"Нікопольський район","location_oblast_uid":356},{"id":269438,"location_title":"м. Нікополь","location_type":"city","started_at":"2026-09-29T12:26:08.644Z","finished_at":null,"updated_at":"2026-09-29T12:26:16.659Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"5351","notes":null,"country":null,"alert_level":"red","location_title_en":"Nikopol city","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-29T12:26:08.644Z"}],"location_oblast_uid":351},{"id":269439,"location_title":"Нікопольська територіальна громада","location_type":"hromada","started_at":"2026-09-29T12:26:08.644Z","finished_at":null,"updated_at":"2026-09-29T12:26:16.668Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"351","notes":null,"country":null,"alert_level":"red","location_title_en":"Nikopolska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-29T12:26:08.644Z"}],"location_raion":"Нікопольський район","location_oblast_uid":351},{"id":269679,"location_title":"м. Запоріжжя","location_type":"city","started_at":"2026-09-29T23:32:21.926Z","finished_at":null,"updated_at":"2026-09-29T23:32:25.950Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"5564","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Zaporizhzhia city","location_oblast_uid":564},{"id":269680,"location_title":"Запорізька територіальна громада","location_type":"hromada","started_at":"2026-09-29T23:32:21.926Z","finished_at":null,"updated_at":"2026-09-29T23:32:25.959Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"564","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Zaporizka terytorialna hromada","location_raion":"Запорізький район","location_oblast_uid":564},{"id":269742,"location_title":"Бучанський район","location_type":"raion","started_at":"2026-09-30T01:43:26.821Z","finished_at":null,"updated_at":"2026-09-30T01:43:34.973Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"75","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Bucha district raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:26.821Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":75},{"id":269743,"location_title":"Фастівський район","location_type":"raion","started_at":"2026-09-30T01:43:27.072Z","finished_at":null,"updated_at":"2026-09-30T01:43:35.015Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"77","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Fastiv raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:27.072Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":77},{"id":269745,"location_title":"Бориспільський район","location_type":"raion","started_at":"2026-09-30T01:43:28.449Z","finished_at":null,"updated_at":"2026-09-30T01:43:35.100Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"78","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Boryspil raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:28.449Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":78},{"id":269747,"location_title":"Броварський район","location_type":"raion","started_at":"2026-09-30T01:43:28.754Z","finished_at":null,"updated_at":"2026-09-30T01:43:35.160Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"79","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Brovary raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:28.754Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":79},{"id":269748,"location_title":"Обухівський район","location_type":"raion","started_at":"2026-09-30T01:43:29.286Z","finished_at":null,"updated_at":"2026-09-30T01:43:35.192Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"76","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Obukhiv raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:29.286Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":76},{"id":269750,"location_title":"Корюківський район","location_type":"raion","started_at":"2026-09-30T01:43:53.135Z","finished_at":null,"updated_at":"2026-09-30T01:43:55.511Z","alert_type":"air_raid","location_oblast":"Чернігівська область","location_uid":"144","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Koriukivka raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:53.135Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":144},{"id":269754,"location_title":"Лубенський район","location_type":"raion","started_at":"2026-09-30T01:43:54.609Z","finished_at":null,"updated_at":"2026-09-30T07:42:59.150Z","alert_type":"air_raid","location_oblast":"Полтавська область","location_uid":"106","notes":null,"country":null,"alert_level":"red","location_title_en":"Lubny raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:54.609Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T07:42:51.729Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":106},{"id":269755,"location_title":"Прилуцький район","location_type":"raion","started_at":"2026-09-30T01:43:54.718Z","finished_at":null,"updated_at":"2026-09-30T01:43:55.697Z","alert_type":"air_raid","location_oblast":"Чернігівська область","location_uid":"143","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Pryluky raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:54.718Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":143},{"id":269756,"location_title":"Новгород-Сіверський район","location_type":"raion","started_at":"2026-09-30T01:43:54.818Z","finished_at":null,"updated_at":"2026-09-30T01:43:55.729Z","alert_type":"air_raid","location_oblast":"Чернігівська область","location_uid":"141","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Novhorod-Siverskyi raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:54.818Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":141},{"id":269761,"location_title":"Золотоніський район","location_type":"raion","started_at":"2026-09-30T01:43:56.015Z","finished_at":null,"updated_at":"2026-09-30T07:42:07.691Z","alert_type":"air_raid","location_oblast":"Черкаська область","location_uid":"153","notes":null,"country":null,"alert_level":"red","location_title_en":"Zolotonosha raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:56.015Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T07:41:55.975Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":153},{"id":269758,"location_title":"Ніжинський район","location_type":"raion","started_at":"2026-09-30T01:43:56.270Z","finished_at":null,"updated_at":"2026-09-30T01:44:05.938Z","alert_type":"air_raid","location_oblast":"Чернігівська область","location_uid":"142","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Nizhyn raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T01:43:56.270Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":142},{"id":269773,"location_title":"Черкаський район","location_type":"raion","started_at":"2026-09-30T02:02:42.247Z","finished_at":null,"updated_at":"2026-09-30T07:42:07.743Z","alert_type":"air_raid","location_oblast":"Черкаська область","location_uid":"152","notes":null,"country":null,"alert_level":"red","location_title_en":"Cherkasy raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T02:02:42.247Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T07:41:56.181Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":152},{"id":269794,"location_title":"Чернігівський район","location_type":"raion","started_at":"2026-09-30T03:00:14.707Z","finished_at":null,"updated_at":"2026-09-30T03:00:21.140Z","alert_type":"air_raid","location_oblast":"Чернігівська область","location_uid":"140","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Chernihiv raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T03:00:14.707Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":140},{"id":269817,"location_title":"Білоцерківський район","location_type":"raion","started_at":"2026-09-30T04:09:50.261Z","finished_at":null,"updated_at":"2026-09-30T04:09:53.364Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"73","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Bila Tserkva raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T04:09:50.261Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":73},{"id":269837,"location_title":"м. Марганець","location_type":"city","started_at":"2026-09-30T05:41:04.823Z","finished_at":null,"updated_at":"2026-09-30T05:41:12.109Z","alert_type":"artillery_shelling","location_oblast":"Дніпропетровська область","location_uid":"5349","notes":null,"country":null,"alert_level":"red","location_title_en":"Marhanets city","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T05:41:04.823Z"}],"location_oblast_uid":349},{"id":269838,"location_title":"Марганецька територіальна громада","location_type":"hromada","started_at":"2026-09-30T05:41:04.823Z","finished_at":null,"updated_at":"2026-09-30T05:41:12.123Z","alert_type":"artillery_shelling","location_oblast":"Дніпропетровська область","location_uid":"349","notes":null,"country":null,"alert_level":"red","location_title_en":"Marhanetska terytorialna hromada","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T05:41:04.823Z"}],"location_raion":"Нікопольський район","location_oblast_uid":349},{"id":269908,"location_title":"Богодухівський район","location_type":"raion","started_at":"2026-09-30T10:20:57.300Z","finished_at":null,"updated_at":"2026-09-30T10:32:28.198Z","alert_type":"air_raid","location_oblast":"Харківська область","location_uid":"126","notes":null,"country":null,"alert_level":"red","location_title_en":"Bohodukhiv raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T10:20:57.300Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:32:20.593Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":126},{"id":269922,"location_title":"Запорізький район","location_type":"raion","started_at":"2026-09-30T10:43:51.222Z","finished_at":null,"updated_at":"2026-09-30T10:44:01.778Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"149","notes":null,"country":null,"alert_level":"red","location_title_en":"Zaporizhia raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:43:51.222Z"}],"location_oblast_uid":149},{"id":269923,"location_title":"Василівський район","location_type":"raion","started_at":"2026-09-30T10:43:51.397Z","finished_at":null,"updated_at":"2026-09-30T10:44:01.826Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"146","notes":null,"country":null,"alert_level":"red","location_title_en":"Vasylivka raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:43:51.397Z"}],"location_oblast_uid":146},{"id":269924,"location_title":"Пологівський район","location_type":"raion","started_at":"2026-09-30T10:43:51.559Z","finished_at":null,"updated_at":"2026-09-30T10:44:01.869Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"145","notes":null,"country":null,"alert_level":"red","location_title_en":"Polohy raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:43:51.559Z"}],"location_oblast_uid":145},{"id":269925,"location_title":"Мелітопольський район","location_type":"raion","started_at":"2026-09-30T10:43:51.651Z","finished_at":null,"updated_at":"2026-09-30T10:44:01.921Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"148","notes":null,"country":null,"alert_level":"red","location_title_en":"Melitopol raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:43:51.651Z"}],"location_oblast_uid":148},{"id":269926,"location_title":"Бердянський район","location_type":"raion","started_at":"2026-09-30T10:43:51.822Z","finished_at":null,"updated_at":"2026-09-30T10:44:01.967Z","alert_type":"air_raid","location_oblast":"Запорізька область","location_uid":"147","notes":null,"country":null,"alert_level":"red","location_title_en":"Berdyansk raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:43:51.822Z"}],"location_oblast_uid":147},{"id":269932,"location_title":"Харківський район","location_type":"raion","started_at":"2026-09-30T10:49:58.414Z","finished_at":null,"updated_at":"2026-09-30T10:50:08.264Z","alert_type":"air_raid","location_oblast":"Харківська область","location_uid":"124","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Kharkiv raion","location_oblast_uid":124},{"id":269934,"location_title":"Сумський район","location_type":"raion","started_at":"2026-09-30T10:54:44.883Z","finished_at":null,"updated_at":"2026-09-30T10:58:47.525Z","alert_type":"air_raid","location_oblast":"Сумська область","location_uid":"114","notes":null,"country":null,"alert_level":"red","location_title_en":"Sumy raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T10:54:44.883Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:42.212Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":114},{"id":269935,"location_title":"Шосткинський район","location_type":"raion","started_at":"2026-09-30T10:56:48.990Z","finished_at":null,"updated_at":"2026-09-30T10:56:55.701Z","alert_type":"air_raid","location_oblast":"Сумська область","location_uid":"115","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Shostka raion","location_oblast_uid":115},{"id":269936,"location_title":"Роменський район","location_type":"raion","started_at":"2026-09-30T10:56:56.184Z","finished_at":null,"updated_at":"2026-09-30T10:57:05.873Z","alert_type":"air_raid","location_oblast":"Сумська область","location_uid":"116","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Romny raion","location_oblast_uid":116},{"id":269939,"location_title":"Конотопський район","location_type":"raion","started_at":"2026-09-30T10:57:08.942Z","finished_at":null,"updated_at":"2026-09-30T10:58:47.571Z","alert_type":"air_raid","location_oblast":"Сумська область","location_uid":"117","notes":null,"country":null,"alert_level":"red","location_title_en":"Konotop raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T10:57:08.942Z","source_message":"Дронова загроза (жовтий рівень)"},{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:42.026Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":117},{"id":269940,"location_title":"Покровський район","location_type":"raion","started_at":"2026-09-30T10:58:17.149Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.056Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"56","notes":null,"country":null,"alert_level":"red","location_title_en":"Pokrovskii raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:17.149Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":56},{"id":269941,"location_title":"Кальміуський район","location_type":"raion","started_at":"2026-09-30T10:58:17.260Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.099Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"49","notes":null,"country":null,"alert_level":"red","location_title_en":"Kalmius raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:17.260Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":49},{"id":269944,"location_title":"Волноваський район","location_type":"raion","started_at":"2026-09-30T10:58:17.320Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.200Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"55","notes":null,"country":null,"alert_level":"red","location_title_en":"Volnovakha raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:17.320Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":55},{"id":269942,"location_title":"Горлівський район","location_type":"raion","started_at":"2026-09-30T10:58:17.344Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.129Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"51","notes":null,"country":null,"alert_level":"red","location_title_en":"Horlivka raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:17.344Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":51},{"id":269945,"location_title":"Донецький район","location_type":"raion","started_at":"2026-09-30T10:58:17.410Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.229Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"53","notes":null,"country":null,"alert_level":"red","location_title_en":"Donetsk raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:17.410Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":53},{"id":269946,"location_title":"Бахмутський район","location_type":"raion","started_at":"2026-09-30T10:58:18.110Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.252Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"54","notes":null,"country":null,"alert_level":"red","location_title_en":"Bakhmut raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:18.110Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":54},{"id":269947,"location_title":"Краматорський район","location_type":"raion","started_at":"2026-09-30T10:58:18.210Z","finished_at":null,"updated_at":"2026-09-30T10:58:27.280Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"50","notes":null,"country":null,"alert_level":"red","location_title_en":"Kramatorsk raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:58:18.210Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":50},{"id":269948,"location_title":"Синельниківський район","location_type":"raion","started_at":"2026-09-30T10:59:48.509Z","finished_at":null,"updated_at":"2026-09-30T10:59:58.320Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"48","notes":null,"country":null,"alert_level":"red","location_title_en":"Synelnykove raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:59:48.509Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":48},{"id":269949,"location_title":"Дніпровський район","location_type":"raion","started_at":"2026-09-30T10:59:49.752Z","finished_at":null,"updated_at":"2026-09-30T10:59:58.372Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"44","notes":null,"country":null,"alert_level":"red","location_title_en":"Dnipro raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T10:59:49.752Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":44},{"id":269950,"location_title":"Лозівський район","location_type":"raion","started_at":"2026-09-30T11:00:12.189Z","finished_at":null,"updated_at":"2026-09-30T11:00:18.656Z","alert_type":"air_raid","location_oblast":"Харківська область","location_uid":"128","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Lozova raion","location_oblast_uid":128},{"id":269952,"location_title":"Миколаївський район","location_type":"raion","started_at":"2026-09-30T11:03:31.082Z","finished_at":null,"updated_at":"2026-09-30T11:03:31.831Z","alert_type":"air_raid","location_oblast":"Миколаївська область","location_uid":"98","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Mykolaiv raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:03:31.082Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":98},{"id":269953,"location_title":"Вишгородський район","location_type":"raion","started_at":"2026-09-30T11:10:11.426Z","finished_at":null,"updated_at":"2026-09-30T11:10:19.377Z","alert_type":"air_raid","location_oblast":"Київська область","location_uid":"74","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Vyshhorod raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:10:11.426Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":74},{"id":269954,"location_title":"м. Київ","location_type":"oblast","started_at":"2026-09-30T11:10:11.575Z","finished_at":null,"updated_at":"2026-09-30T11:10:19.948Z","alert_type":"air_raid","location_oblast":"м. Київ","location_uid":"31","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Kyiv city","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:10:11.575Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":31},{"id":269955,"location_title":"Павлоградський район","location_type":"raion","started_at":"2026-09-30T11:11:56.602Z","finished_at":null,"updated_at":"2026-09-30T11:12:00.540Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"45","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Pavlohrad raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:11:56.602Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":45},{"id":269956,"location_title":"Бериславський район","location_type":"raion","started_at":"2026-09-30T11:12:41.687Z","finished_at":null,"updated_at":"2026-09-30T11:12:51.117Z","alert_type":"air_raid","location_oblast":"Херсонська область","location_uid":"129","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Beryslav raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:12:41.687Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":129},{"id":269957,"location_title":"Самарівський район","location_type":"raion","started_at":"2026-09-30T11:18:43.797Z","finished_at":null,"updated_at":"2026-09-30T11:18:47.017Z","alert_type":"air_raid","location_oblast":"Дніпропетровська область","location_uid":"43","notes":null,"country":null,"alert_level":"red","location_title_en":"Samarivskyi raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T11:18:43.797Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":43},{"id":269958,"location_title":"Маріупольський район","location_type":"raion","started_at":"2026-09-30T11:22:45.617Z","finished_at":null,"updated_at":"2026-09-30T11:22:50.568Z","alert_type":"air_raid","location_oblast":"Донецька область","location_uid":"52","notes":null,"country":null,"alert_level":"red","location_title_en":"Mariupol raion","threats":[{"threat_type":"unspecified_missiles","level":"red","started_at":"2026-09-30T11:22:45.617Z","source_message":"Ракетна загроза (червоний рівень)"}],"location_oblast_uid":52},{"id":269959,"location_title":"Коростенський район","location_type":"raion","started_at":"2026-09-30T11:25:16.803Z","finished_at":null,"updated_at":"2026-09-30T11:25:22.682Z","alert_type":"air_raid","location_oblast":"Житомирська область","location_uid":"58","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Korosten raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:25:16.803Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":58},{"id":269960,"location_title":"Житомирський район","location_type":"raion","started_at":"2026-09-30T11:25:16.977Z","finished_at":null,"updated_at":"2026-09-30T11:25:22.724Z","alert_type":"air_raid","location_oblast":"Житомирська область","location_uid":"59","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Zhytomyr raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:25:16.977Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":59},{"id":269961,"location_title":"Кременчуцький район","location_type":"raion","started_at":"2026-09-30T11:29:51.913Z","finished_at":null,"updated_at":"2026-09-30T11:29:56.143Z","alert_type":"air_raid","location_oblast":"Полтавська область","location_uid":"107","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Kremenchuk raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:29:51.913Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":107},{"id":269962,"location_title":"Олександрійський район","location_type":"raion","started_at":"2026-09-30T11:29:52.097Z","finished_at":null,"updated_at":"2026-09-30T11:29:56.186Z","alert_type":"air_raid","location_oblast":"Кіровоградська область","location_uid":"80","notes":null,"country":null,"alert_level":"yellow","location_title_en":"Oleksandriia raion","threats":[{"threat_type":"drones","level":"yellow","started_at":"2026-09-30T11:29:52.097Z","source_message":"Дронова загроза (жовтий рівень)"}],"location_oblast_uid":80}],"meta":{"last_updated_at":"2026/09/30 11:30:02 +0000","type":"full"},"disclaimer":"If you use python try our official alerts_in_ua PiP package."};
 
-    // Дані та кеші GeoJSON (завантажуються за відносними шляхами)
+    // Кеш даних
     let cachedRegionsData = null;
     let cachedRayonyData = null;
     let cachedHromadyData = null;
@@ -1012,14 +1205,14 @@
     const rayonyNormMap = new Map();
     const hromadyNormMap = new Map();
 
-    // Оперативні дані: ініціалізуються реальним зрізом
+    // Оперативні дані
     let latestAlertsData = INITIAL_ALERTS;
-    let currentDetailMode = 'dynamic'; // 'dynamic' | 'oblast' | 'raion' | 'otg'
-    let currentListFilter = 'all';     // 'all' | 'red' | 'yellow'
+    let currentDetailMode = 'dynamic'; 
+    let currentListFilter = 'all';     
     let isSoundMuted = false;
 
     /* ==========================================================================
-       1. Нормалізація географічних назв для високоточного зіставлення
+       1. Нормалізація географічних назв
        ========================================================================== */
     function normalizeGeoName(str) {
       if (!str) return '';
@@ -1041,7 +1234,6 @@
 
     /* ==========================================================================
        2. Метадані рівнів тривоги та специфічних загроз
-          Підтримка: air_raid, artillery_shelling, urban_fights, chemical, nuclear
        ========================================================================== */
     function getAlertLevelMeta(alert) {
       const level = alert.alert_level || 'red';
@@ -1052,10 +1244,8 @@
         return {
           isRed: true, isYellow: false, isSpecific: true,
           fillColor: '#a3e635', color: '#65a30d',
-          badgeText: '☣ ХІМІЧНА',
-          badgeClass: 'badge-chemical',
-          cardClass: 'card-threat-chemical',
-          actionNoteClass: 'chemical',
+          badgeText: '☣ ХІМІЧНА', badgeClass: 'badge-chemical',
+          cardClass: 'card-threat-chemical', actionNoteClass: 'chemical',
           actionNote: '⚠️ Хімічна загроза — ізолюйте приміщення, вимкніть вентиляцію!',
           soundDesc: 'Хімічна небезпека'
         };
@@ -1066,10 +1256,8 @@
         return {
           isRed: true, isYellow: false, isSpecific: true,
           fillColor: '#f43f5e', color: '#be123c',
-          badgeText: '☢️ РАДІАЦІЯ',
-          badgeClass: 'badge-nuclear',
-          cardClass: 'card-threat-nuclear',
-          actionNoteClass: 'nuclear',
+          badgeText: '☢️ РАДІАЦІЯ', badgeClass: 'badge-nuclear',
+          cardClass: 'card-threat-nuclear', actionNoteClass: 'nuclear',
           actionNote: '☢️ Радіаційна небезпека — укриття, йодна профілактика!',
           soundDesc: 'Радіаційна небезпека'
         };
@@ -1080,10 +1268,8 @@
         return {
           isRed: true, isYellow: false, isSpecific: true,
           fillColor: '#ff7700', color: '#c2410c',
-          badgeText: '💥 АРТОБСТРІЛ',
-          badgeClass: 'badge-artillery',
-          cardClass: 'card-threat-artillery',
-          actionNoteClass: 'artillery',
+          badgeText: '💥 АРТОБСТРІЛ', badgeClass: 'badge-artillery',
+          cardClass: 'card-threat-artillery', actionNoteClass: 'artillery',
           actionNote: '🔴 Загроза артобстрілу — негайно в укриття або правило 2 стін!',
           soundDesc: 'Загроза артилерійського обстрілу'
         };
@@ -1094,10 +1280,8 @@
         return {
           isRed: true, isYellow: false, isSpecific: true,
           fillColor: '#e11d48', color: '#9f1239',
-          badgeText: '⚔️ ВУЛИЧНІ БОЇ',
-          badgeClass: 'badge-urban',
-          cardClass: 'card-threat-urban',
-          actionNoteClass: 'urban',
+          badgeText: '⚔️ ВУЛИЧНІ БОЇ', badgeClass: 'badge-urban',
+          cardClass: 'card-threat-urban', actionNoteClass: 'urban',
           actionNote: '🔴 Вуличні бої — не залишайте приміщень, відійдіть від вікон!',
           soundDesc: 'Вуличні бої'
         };
@@ -1108,30 +1292,26 @@
         return {
           isRed: false, isYellow: true, isSpecific: false,
           fillColor: '#ffcc00', color: '#a16207',
-          badgeText: '🟡 ДРОН',
-          badgeClass: 'badge-yellow',
-          cardClass: 'card-level-yellow',
-          actionNoteClass: 'yellow',
+          badgeText: '🟡 ДРОН', badgeClass: 'badge-yellow',
+          cardClass: 'card-level-yellow', actionNoteClass: 'yellow',
           actionNote: '🟡 Наліт дронів — підвищена увага (робота за правилами безпеки)',
           soundDesc: 'Наліт безпілотників, підвищена увага'
         };
       }
 
-      // Червоний рівень: Ракета / Ракетна небезпека (за замовчуванням)
+      // Червоний рівень: Ракета / Ракетна небезпека
       return {
         isRed: true, isYellow: false, isSpecific: false,
         fillColor: '#ff2a3b', color: '#991b1b',
-        badgeText: '🔴 РАКЕТА',
-        badgeClass: 'badge-red',
-        cardClass: 'card-level-red',
-        actionNoteClass: 'red',
+        badgeText: '🔴 РАКЕТА', badgeClass: 'badge-red',
+        cardClass: 'card-level-red', actionNoteClass: 'red',
         actionNote: '🔴 Ракетна небезпека — НЕГАЙНО В УКРИТТЯ!',
         soundDesc: 'Ракетна небезпека, негайно в укриття'
       };
     }
 
     /* ==========================================================================
-       3. Web Audio API — Звукові сигнали сирени та диктор
+       3. Web Audio API — Звукові сигнали
        ========================================================================== */
     let audioCtx = null;
 
@@ -1145,7 +1325,6 @@
       return audioCtx;
     }
 
-    // Автоматичне розблокування аудіоконтексту після першого кліку/дотику користувача
     function unlockAudioContext() {
       const ctx = getAudioContext();
       if (ctx && ctx.state === 'suspended') {
@@ -1159,7 +1338,6 @@
     window.addEventListener('touchstart', unlockAudioContext);
     window.addEventListener('keydown', unlockAudioContext);
 
-    // 🔴 Червона тривога: пронизливий сигнал тривоги
     function playRedAlertSound() {
       if (isSoundMuted) return;
       try {
@@ -1185,7 +1363,6 @@
       } catch (e) {}
     }
 
-    // 🟡 Жовта тривога: подвійний попереджувальний сигнал
     function playYellowAlertSound() {
       if (isSoundMuted) return;
       try {
@@ -1206,7 +1383,6 @@
       } catch (e) {}
     }
 
-    // 🔕 Відбій тривоги
     function playAllClearSound() {
       if (isSoundMuted) return;
       try {
@@ -1227,7 +1403,6 @@
       } catch (e) {}
     }
 
-    // Український голосовий диктор (SpeechSynthesis API uk-UA)
     function speakUkrainian(text) {
       if (isSoundMuted || !('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
@@ -1242,7 +1417,7 @@
     }
 
     /* ==========================================================================
-       4. Leaflet Карта: Esri World Dark Gray (Безкоштовна, без водяних знаків)
+       4. Leaflet Карта
        ========================================================================== */
     const map = L.map('map', {
       center: [48.3794, 31.1656],
@@ -1264,7 +1439,6 @@
       hudCoords.textContent = `${e.latlng.lat.toFixed(4)}° N, ${e.latlng.lng.toFixed(4)}° E`;
     });
 
-    // Шари мапи
     const baseOblastsLayerGroup = L.layerGroup().addTo(map);
     const dynamicThreatsLayerGroup = L.layerGroup().addTo(map);
     const manualGridLayerGroup = L.layerGroup().addTo(map);
@@ -1280,13 +1454,11 @@
     }
 
     /* ==========================================================================
-       5. Чисте завантаження GeoJSON файлів (Відносні шляхи)
-       ./ukraine_regions.geojson, ./ukraine_rayony.geojson, ./ukraine_hromady.geojson
+       5. Чисте завантаження GeoJSON файлів
        ========================================================================== */
     async function loadAllGeoData() {
       setLoader(true, 'Завантаження контурів областей...');
 
-      // 1. Області України (відносний шлях)
       try {
         let resp = await fetch('./ukraine_regions.geojson');
         if (!resp.ok) {
@@ -1301,7 +1473,6 @@
         console.warn('Не вдалося завантажити ukraine_regions.geojson:', e);
       }
 
-      // 2. Райони України (відносний шлях)
       setLoader(true, 'Завантаження контурів районів...');
       try {
         let resp = await fetch('./ukraine_rayony.geojson');
@@ -1316,7 +1487,6 @@
         console.warn('Не вдалося завантажити ukraine_rayony.geojson:', e);
       }
 
-      // 3. Територіальні громади (ОТГ) України (відносний шлях)
       setLoader(true, 'Завантаження контурів громад...');
       try {
         let resp = await fetch('./ukraine_hromady.geojson');
@@ -1336,9 +1506,7 @@
     }
 
     /* ==========================================================================
-       6. Розумна та Динамічна деталізація контурів
-          - Області рендеряться базовою сіткою
-          - При загрозах для окремих районів/громад автоматично накладається їх контур
+       6. Деталізація контурів
        ========================================================================== */
     function renderMapByCurrentMode() {
       if (currentDetailMode === 'dynamic') {
@@ -1361,7 +1529,6 @@
 
       const alerts = latestAlertsData.alerts || [];
 
-      // Множина областей з повною тривогою
       const fullOblastAlerts = new Map();
       alerts.forEach(a => {
         if (a.location_type === 'oblast') {
@@ -1369,14 +1536,12 @@
         }
       });
 
-      // Луганська область постійно червона
       fullOblastAlerts.set(normalizeGeoName('Луганська область'), { 
         alert_level: 'red', 
         alert_type: 'air_raid', 
         location_title: 'Луганська область' 
       });
 
-      // 1. Базова сітка областей України
       const oblastsLayer = L.geoJSON(cachedRegionsData, {
         style: (feature) => {
           const rawName = feature.properties.region || '';
@@ -1395,7 +1560,6 @@
             };
           }
 
-          // Спокійний контур
           return {
             fillColor: '#00d4ff',
             weight: 1.2,
@@ -1437,7 +1601,6 @@
 
       baseOblastsLayerGroup.addLayer(oblastsLayer);
 
-      // 2. ДИНАМІЧНІ КОНТУРИ: Рендеримо конкретні райони та ТГ відповідним кольором
       alerts.forEach(a => {
         if (a.location_type === 'oblast') return;
 
@@ -1445,7 +1608,6 @@
         const meta = getAlertLevelMeta(a);
         let targetFeature = null;
 
-        // Пошук у громадах
         if (a.location_type === 'hromada' || a.location_type === 'city') {
           targetFeature = hromadyNormMap.get(normTitle);
           if (!targetFeature) {
@@ -1458,7 +1620,6 @@
           }
         }
 
-        // Пошук у районах
         if (!targetFeature) {
           targetFeature = rayonyNormMap.get(normTitle);
           if (!targetFeature) {
@@ -1471,7 +1632,6 @@
           }
         }
 
-        // Рендеримо точний контур району/громади поверх карти
         if (targetFeature) {
           const detailLayer = L.geoJSON(targetFeature, {
             style: {
@@ -1559,7 +1719,7 @@
     }
 
     /* ==========================================================================
-       7. Оновлення списку загроз та підрахунок рівнів (Червоний / Жовтий)
+       7. Оновлення списку загроз та підрахунок рівнів
        ========================================================================== */
     const threatListContainer = document.getElementById('threatListContainer');
     const countRedAlerts = document.getElementById('countRedAlerts');
@@ -1580,7 +1740,6 @@
       countYellowAlerts.textContent = yellowCount;
       countTotalFilter.textContent = alerts.length;
 
-      // Голосове сповіщення про нові загрози за їх рівнем
       const currentAlertIds = new Set(alerts.map(a => a.id || a.location_title));
       if (previousAlertIds.size > 0) {
         alerts.forEach(a => {
@@ -1599,12 +1758,21 @@
       }
       previousAlertIds = currentAlertIds;
 
-      // Рендеринг списку з урахуванням фільтру
       threatListContainer.innerHTML = '';
 
       const filteredAlerts = alerts.filter(a => {
         if (currentListFilter === 'red') return a.alert_level === 'red';
         if (currentListFilter === 'yellow') return a.alert_level === 'yellow';
+        if (currentListFilter === 'artillery_shelling') return a.alert_type === 'artillery_shelling';
+        if (currentListFilter === 'unspecified_missiles') {
+          return a.alert_type === 'air_raid' && a.alert_level === 'red';
+        }
+        if (currentListFilter === 'potential' || currentListFilter === 'kab') {
+          return a.alert_level === 'red' || a.alert_level === 'yellow';
+        }
+        if (currentListFilter === 'urban_fights') {
+          return a.alert_type === 'urban_fights' || a.alert_type === 'chemical_threat' || a.alert_type === 'nuclear_threat';
+        }
         return true;
       });
 
@@ -1650,7 +1818,7 @@
     }
 
     /* ==========================================================================
-       8. Реальні стихійні лиха: USGS Live Earthquake API (Тільки підтверджені дані)
+       8. Реальні стихійні лиха: USGS Live Earthquake API
        ========================================================================== */
     const realHazardsList = document.getElementById('realHazardsList');
     const hazardStatsInfo = document.getElementById('hazardStatsInfo');
@@ -1732,8 +1900,7 @@
     }
 
     /* ==========================================================================
-       9. Real-time Опитування alerts.in.ua API через Cloudflare Worker Proxy
-          (З оптимізацією від помилки 429 Too Many Requests)
+       9. Real-time Опитування через Cloudflare Worker Proxy
        ========================================================================== */
     let _syncAbortCtrl = null;
     let syncTimerId = null;
@@ -1755,7 +1922,6 @@
         });
         clearTimeout(timeoutId);
 
-        // Обробка 429 Too Many Requests
         if (resp.status === 429) {
           console.warn('Отримано 429 (Too Many Requests). Пауза запитів розширена.');
           if (statusEl) {
@@ -1777,7 +1943,6 @@
             updateThreatsUI(data.alerts);
             renderMapByCurrentMode();
 
-            // Звичайне оновлення раз на 25 секунд
             scheduleNextSync(25000);
             return;
           }
@@ -1811,13 +1976,31 @@
     /* ==========================================================================
        10. Керування та взаємодія з інтерфейсом
        ========================================================================== */
-    // Таби
+    // Табы
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
+      });
+    });
+
+    // Интерактив для карточек источников "Воздушные силы ВСУ"
+    document.querySelectorAll('.source-grid-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const filter = card.dataset.sourceFilter;
+        
+        const isAlreadyActive = card.classList.contains('active');
+        
+        document.querySelectorAll('.source-grid-card').forEach(c => c.classList.remove('active'));
+        
+        if (!isAlreadyActive) {
+          card.classList.add('active');
+          setFilter(filter);
+        } else {
+          setFilter('all');
+        }
       });
     });
 
