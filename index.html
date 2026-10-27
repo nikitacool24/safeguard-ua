@@ -1733,26 +1733,40 @@
        4. Web Audio API
        ========================================================================== */
     let audioCtx = null;
+    let userHasInteracted = false;
 
     function getAudioContext() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!userHasInteracted) return null; // Не викликати до взаємодії користувача
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       return audioCtx;
     }
 
-    function unlockAudioContext() {
-      const ctx = getAudioContext();
-      if (ctx && ctx.state === 'suspended') ctx.resume();
-      window.removeEventListener('click', unlockAudioContext);
-      window.removeEventListener('touchstart', unlockAudioContext);
+    function onUserGesture() {
+      userHasInteracted = true;
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      window.removeEventListener('click', onUserGesture);
+      window.removeEventListener('touchstart', onUserGesture);
+      window.removeEventListener('keydown', onUserGesture);
     }
-    window.addEventListener('click', unlockAudioContext);
-    window.addEventListener('touchstart', unlockAudioContext);
+    window.addEventListener('click', onUserGesture, { once: true });
+    window.addEventListener('touchstart', onUserGesture, { once: true });
+    window.addEventListener('keydown', onUserGesture, { once: true });
 
     function playRedAlertSound() {
-      if (isSoundMuted) return;
+      if (isSoundMuted || !userHasInteracted) return;
       try {
         const ctx = getAudioContext();
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
@@ -1772,9 +1786,10 @@
     }
 
     function playYellowAlertSound() {
-      if (isSoundMuted) return;
+      if (isSoundMuted || !userHasInteracted) return;
       try {
         const ctx = getAudioContext();
+        if (!ctx) return;
         [0, 0.22, 0.55, 0.77].forEach((delay) => {
           const t = ctx.currentTime + delay;
           const osc = ctx.createOscillator();
@@ -1792,9 +1807,10 @@
     }
 
     function playAllClearSound() {
-      if (isSoundMuted) return;
+      if (isSoundMuted || !userHasInteracted) return;
       try {
         const ctx = getAudioContext();
+        if (!ctx) return;
         [523.25, 659.25, 783.99].forEach((f, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -2354,11 +2370,11 @@
 
             const meta = getAlertLevelMeta(a);
             if (meta.isRed) {
-              playRedAlertSound(); triggerVibration('red');
+              playRedAlertSound();
               triggerVibration('red');
               speakUkrainian(`Увага! Червоний рівень тривоги у ${a.location_title}! ${meta.soundDesc}!`);
             } else {
-              playYellowAlertSound(); triggerVibration('yellow');
+              playYellowAlertSound();
               triggerVibration('yellow');
               speakUkrainian(`Увага! Жовтий рівень тривоги у ${a.location_title}! ${meta.soundDesc}.`);
             }
@@ -2521,84 +2537,53 @@
 
       const statusEl = document.getElementById('systemStatusText');
       const mobStatusEl = document.getElementById('mobStatusText');
-
-      const directUrl = `https://api.alerts.in.ua/v1/alerts/active.json?token=${API_TOKEN}`;
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-      // Ланцюжок джерел
-      const candidateUrls = isLocal
-        ? [
-            `/api/alerts?token=${API_TOKEN}`,
-            WORKER_PROXY_URL,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
-            `./alerts_snapshot.json`
-          ]
-        : [
-            WORKER_PROXY_URL,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
-            `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
-            `./alerts_snapshot.json`
-          ];
+      // Запит тільки через надійний Cloudflare Worker або локальний проксі
+      const targetUrl = isLocal ? `/api/alerts?token=${API_TOKEN}` : WORKER_PROXY_URL;
 
       try {
-        for (const targetUrl of candidateUrls) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6500);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-            const resp = await fetch(targetUrl, { signal: controller.signal, cache: 'no-store' });
-            clearTimeout(timeoutId);
+        const resp = await fetch(targetUrl, { signal: controller.signal, cache: 'no-store' });
+        clearTimeout(timeoutId);
 
-            if (resp.status === 429) {
-              // Якщо цей проксі повернув 429, пробуємо наступне джерело в ланцюжку
-              continue;
+        if (resp.status === 429) {
+          console.warn('[SafeGuard UA] HTTP 429 від alerts.in.ua. Налаштуйте кешування у Cloudflare Worker.');
+          scheduleNextSync(20000);
+          return;
+        }
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && Array.isArray(data.alerts)) {
+            latestAlertsData = data;
+            lastSuccessfulSyncTimestamp = Date.now();
+
+            if (statusEl) {
+              statusEl.textContent = 'СИСТЕМА ОНЛАЙН (alerts.in.ua)';
+              statusEl.parentElement.style.color = 'var(--safe-green)';
+            }
+            if (mobStatusEl) {
+              mobStatusEl.textContent = 'ОНЛАЙН';
+              mobStatusEl.style.color = 'var(--safe-green)';
             }
 
-            if (resp.ok) {
-              const data = await resp.json();
-              const parsed = (data && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
-
-              if (parsed && Array.isArray(parsed.alerts) && parsed.alerts.length > 0) {
-                latestAlertsData = parsed;
-                lastSuccessfulSyncTimestamp = Date.now();
-
-                if (statusEl) {
-                  statusEl.textContent = 'СИСТЕМА ОНЛАЙН (alerts.in.ua)';
-                  statusEl.parentElement.style.color = 'var(--safe-green)';
-                }
-                if (mobStatusEl) {
-                  mobStatusEl.textContent = 'ОНЛАЙН';
-                  mobStatusEl.style.color = 'var(--safe-green)';
-                }
-
-                updateThreatsUI(parsed.alerts);
-                renderMapByCurrentMode();
-
-                scheduleNextSync(20000);
-                return;
-              }
-            }
-          } catch (err) {
-            if (err.name === 'AbortError' && signal.aborted) return;
+            updateThreatsUI(data.alerts);
+            renderMapByCurrentMode();
+            scheduleNextSync(20000);
+            return;
           }
         }
-
-        // Якщо мережа тимчасово недоступна — спокійно зберігаємо активний моніторинг
-        if (statusEl) {
-          statusEl.textContent = 'СИСТЕМА ОНЛАЙН (alerts.in.ua)';
-          statusEl.parentElement.style.color = 'var(--safe-green)';
-        }
-        if (mobStatusEl) {
-          mobStatusEl.textContent = 'ОНЛАЙН';
-          mobStatusEl.style.color = 'var(--safe-green)';
-        }
-        updateThreatsUI(latestAlertsData.alerts || []);
-        renderMapByCurrentMode();
-        scheduleNextSync(20000);
-
+      } catch (err) {
+        if (err.name === 'AbortError' && signal.aborted) return;
+        console.error('[SafeGuard UA] Помилка синхронізації тривог:', err);
       } finally {
         _isSyncing = false;
       }
+
+      scheduleNextSync(20000);
     }
 
     function scheduleNextSync(ms) {
@@ -2761,13 +2746,12 @@
     } catch (e) {}
 
     function triggerVibration(level) {
-      if (!isVibrationEnabled || !('vibrate' in navigator)) return;
+      // Браузер блокує vibrate, якщо користувач ще не торкнувся екрана
+      if (!isVibrationEnabled || !userHasInteracted || !('vibrate' in navigator)) return;
       try {
         if (level === 'red') {
-          // 🔴 Червоний рівень: агресивна тривожна вібрація
           navigator.vibrate([500, 200, 500, 200, 800]);
         } else {
-          // 🟡 Жовтий рівень: подвійний короткий імпульс
           navigator.vibrate([200, 150, 200]);
         }
       } catch (e) {}
