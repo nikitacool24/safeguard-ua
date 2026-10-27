@@ -2851,7 +2851,13 @@
        ========================================================================== */
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch((err) => {
+        // Оновлюємо кеш та реєструємо чистий Service Worker v2
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (let reg of registrations) {
+            reg.update();
+          }
+        });
+        navigator.serviceWorker.register('./sw.js?v=2').catch((err) => {
           console.warn('ServiceWorker registration error:', err);
         });
       });
