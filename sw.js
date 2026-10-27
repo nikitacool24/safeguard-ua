@@ -1,5 +1,5 @@
-// SafeGuard UA — Service Worker (Offline Cache v1)
-const CACHE_NAME = 'safeguard-ua-v1';
+// SafeGuard UA — Service Worker (Offline Cache v2)
+const CACHE_NAME = 'safeguard-ua-v2';
 
 const STATIC_ASSETS = [
   './',
@@ -7,8 +7,7 @@ const STATIC_ASSETS = [
   './manifest.json',
   './ukraine_regions.geojson',
   './ukraine_rayony.geojson',
-  './ukraine_hromady.geojson',
-  './alerts_snapshot.json'
+  './ukraine_hromady.geojson'
 ];
 
 self.addEventListener('install', (event) => {
@@ -32,26 +31,36 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // API та динамічні запити завжди пускаємо через мережу з фолбеком
-  if (url.pathname.includes('/api/') || url.hostname.includes('workers.dev') || url.hostname.includes('alerts.in.ua')) {
-    return;
+  // ПОЛНА ІЗОЛЯЦІЯ: Service Worker НЕ перехоплює жодні API-запити та сторонні проксі
+  if (
+    url.hostname !== self.location.hostname ||
+    url.pathname.includes('/api/') ||
+    url.pathname.includes('active.json') ||
+    url.hostname.includes('workers.dev') ||
+    url.hostname.includes('allorigins') ||
+    url.hostname.includes('corsproxy') ||
+    url.hostname.includes('usgs.gov')
+  ) {
+    return; // Віддаємо браузеру напряму без втручання Service Worker
   }
 
-  // Для статичних ресурсів та GeoJSON: Cache First -> Network Fallback
+  // Кешуємо тільки локальні статичні файли (GeoJSON, HTML, manifest)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          const respClone = response.clone();
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const respClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
         }
-        return response;
+        return networkResponse;
       });
-    }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('./index.html');
-      }
+    }).catch((err) => {
+      return new Response('Офлайн режим SafeGuard UA', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
     })
   );
 });
