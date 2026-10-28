@@ -157,54 +157,14 @@
       color: var(--text-muted);
     }
 
-    /* Віджет лічильника відвідувачів / онлайн */
-    .viewer-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 212, 255, 0.08);
-      border: 1px solid rgba(0, 212, 255, 0.28);
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
+    .footer-source-link {
       color: var(--cyber-cyan);
-      user-select: none;
-      transition: all 0.3s ease;
+      text-decoration: none;
+      transition: opacity 0.2s;
     }
-    .mob-viewer-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(0, 212, 255, 0.1);
-      border: 1px solid rgba(0, 212, 255, 0.3);
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--cyber-cyan);
-    }
-    .viewer-pulse-dot {
-      width: 6px;
-      height: 6px;
-      background-color: var(--cyber-cyan);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--cyber-cyan);
-      position: relative;
-      display: inline-block;
-    }
-    .viewer-pulse-dot::after {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: -3px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 1px solid var(--cyber-cyan);
-      animation: pulse-ring 2.2s infinite cubic-bezier(0.2, 0.6, 0.4, 1);
+    .footer-source-link:hover {
+      text-decoration: underline;
+      opacity: 0.8;
     }
 
     /* Шапка сайдбару */
@@ -1142,16 +1102,10 @@
       <span style="color: var(--cyber-cyan);">🛡️</span>
       <span>SafeGuard UA</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div class="mob-viewer-tag" id="mobViewerTag" title="Користувачі в додатку">
-        <span class="viewer-pulse-dot"></span>
-        <span id="mobViewerText">👁️ 24</span>
-      </div>
-      <div class="mob-status">
-        <span class="pulse-dot"></span>
-        <span id="mobStatusText">ОНЛАЙН</span>
-        <span style="color: var(--text-dim); margin-left: 4px;" id="mobKyivClock">00:00</span>
-      </div>
+    <div class="mob-status">
+      <span class="pulse-dot"></span>
+      <span id="mobStatusText">ОНЛАЙН</span>
+      <span style="color: var(--text-dim); margin-left: 4px;" id="mobKyivClock">00:00</span>
     </div>
   </div>
 
@@ -1168,13 +1122,7 @@
           <span class="pulse-dot"></span>
           <span id="systemStatusText">СИСТЕМА ОНЛАЙН</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="viewer-tag" id="liveViewerTag" title="Користувачів онлайн зараз">
-            <span class="viewer-pulse-dot"></span>
-            <span id="liveViewerText">👁️ 24 онлайн</span>
-          </div>
-          <div class="clock-tag" id="kyivClock">00:00:00 (Київ)</div>
-        </div>
+        <div class="clock-tag" id="kyivClock">00:00:00 (Київ)</div>
       </div>
 
       <!-- Шапка SafeGuard UA -->
@@ -1358,6 +1306,9 @@
               <button class="btn-action" id="btnPlayAllClear">
                 🔕 Сигнал Відбою
               </button>
+              <button class="btn-action" id="btnTestSpeaker" style="border-color: #a78bfa; color: #c4b5fd;">
+                🗣️ Тест диктора
+              </button>
               <button class="btn-action" id="btnToggleSound">
                 🔊 Звук: Увімкнено
               </button>
@@ -1401,9 +1352,11 @@
 
       <!-- Підвал панелі -->
       <footer class="sidebar-footer">
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-          <span>SafeGuard UA v2.4 · Mobile Ready</span>
-          <span style="font-size: 10px; color: var(--text-dim);" id="footerStatsText">👁️ Онлайн: <b id="footerOnlineCount" style="color: var(--cyber-cyan);">--</b> · Переглядів: <b id="footerVisitsCount" style="color: var(--text-light);">--</b></span>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-weight: 600;">SafeGuard UA v2.5 · Mobile Ready</span>
+          <span style="font-size: 10px; color: var(--text-dim);">
+            Джерела: <a href="https://alerts.in.ua" target="_blank" rel="noopener" class="footer-source-link">alerts.in.ua</a> · <a href="https://earthquake.usgs.gov" target="_blank" rel="noopener" class="footer-source-link">USGS</a>
+          </span>
         </div>
         <button class="btn-action" id="btnManualRefresh" style="font-size: 10.5px; padding: 4px 10px;">
           ↻ Оновити
@@ -2766,6 +2719,21 @@
       speakUkrainian('Відбій повітряної тривоги.');
     });
 
+    const btnTestSpeaker = document.getElementById('btnTestSpeaker');
+    if (btnTestSpeaker) {
+      btnTestSpeaker.addEventListener('click', () => {
+        userHasInteracted = true;
+        if (isSoundMuted) {
+          isSoundMuted = false;
+          if (btnToggleSound) {
+            btnToggleSound.textContent = '🔊 Звук: Увімкнено';
+            btnToggleSound.style.color = 'var(--safe-green)';
+          }
+        }
+        speakUkrainian('Увага! Перевірка системи голосового сповіщення SafeGuard UA. Диктор працює успішно!');
+      });
+    }
+
     const btnToggleSound = document.getElementById('btnToggleSound');
     btnToggleSound.addEventListener('click', () => {
       isSoundMuted = !isSoundMuted;
@@ -2957,117 +2925,26 @@
     });
 
     /* ==========================================================================
-       16. РЕАЛЬНИЙ ЛІЧИЛЬНИК ВІДВІДУВАЧІВ ТА ОНЛАЙНУ (100% GENUINE TELEMETRY)
+       16. ОБЛІК УНІКАЛЬНИХ ВІДВІДУВАНЬ (v2.5)
+       Фіксуються тільки унікальні відвідувачі (localStorage).
+       Локальна розробка (localhost) повністю ігнорується.
        ========================================================================== */
-    function initViewerCounter() {
-      // Генерація/збереження унікального ID клієнта та вкладки
-      let clientId = localStorage.getItem('safeguard_client_id');
-      if (!clientId) {
-        clientId = 'cl_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
-        localStorage.setItem('safeguard_client_id', clientId);
-      }
-      const tabId = 'tab_' + Math.random().toString(36).substring(2, 8);
+    function trackUniqueVisit() {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) return; // Локальна розробка ігнорується
 
-      const footerOnlineEl = document.getElementById('footerOnlineCount');
-      const footerVisitsEl = document.getElementById('footerVisitsCount');
-      const dtViewerEl = document.getElementById('liveViewerText');
-      const mobViewerEl = document.getElementById('mobViewerText');
-
-      function updateUI(onlineCount, totalVisits) {
-        if (onlineCount !== undefined && onlineCount !== null) {
-          const c = Math.max(1, onlineCount);
-          if (dtViewerEl) dtViewerEl.textContent = `👁️ ${c} онлайн`;
-          if (mobViewerEl) mobViewerEl.textContent = `👁️ ${c}`;
-          if (footerOnlineEl) footerOnlineEl.textContent = c.toString();
-        }
-        if (totalVisits !== undefined && totalVisits !== null && totalVisits > 0) {
-          if (footerVisitsEl) footerVisitsEl.textContent = totalVisits.toLocaleString('uk-UA');
-        }
-      }
-
-      // Початкові реальні значення з кешу
-      const cachedVisits = parseInt(localStorage.getItem('safeguard_real_visits') || '0', 10);
-      updateUI(1, cachedVisits > 0 ? cachedVisits : null);
-
-      // --- А. Реєстрація РЕАЛЬНОГО перегляду через публічний API (Abacus) ---
-      const isNewSession = !sessionStorage.getItem('safeguard_session_hit');
-      const abacusUrl = isNewSession
-        ? 'https://abacus.jasoncameron.dev/hit/safeguard-ua-nikitacool24/visits'
-        : 'https://abacus.jasoncameron.dev/get/safeguard-ua-nikitacool24/visits';
-
-      fetch(abacusUrl)
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && typeof data.value === 'number') {
-            sessionStorage.setItem('safeguard_session_hit', '1');
-            localStorage.setItem('safeguard_real_visits', data.value.toString());
-            updateUI(null, data.value);
-          }
-        })
-        .catch(err => {
-          console.warn('[SafeGuard UA] Лічильник переглядів офлайн:', err.message);
-        });
-
-      // --- Б. Реєстрація РЕАЛЬНОЇ присутності (Cross-Tab Local Presence) ---
-      let knownLocalTabs = new Set([tabId]);
       try {
-        if ('BroadcastChannel' in window) {
-          const channel = new BroadcastChannel('safeguard_presence_channel');
-          
-          // Повідомляємо про приєднання
-          channel.postMessage({ type: 'join', tabId });
-          
-          channel.onmessage = (e) => {
-            if (!e.data) return;
-            if (e.data.type === 'join' || e.data.type === 'ping') {
-              knownLocalTabs.add(e.data.tabId);
-              updateUI(knownLocalTabs.size, null);
-              if (e.data.type === 'join') {
-                channel.postMessage({ type: 'ack', tabId });
-              }
-            } else if (e.data.type === 'ack') {
-              knownLocalTabs.add(e.data.tabId);
-              updateUI(knownLocalTabs.size, null);
-            } else if (e.data.type === 'leave') {
-              knownLocalTabs.delete(e.data.tabId);
-              updateUI(knownLocalTabs.size, null);
-            }
-          };
-
-          // Періодичний пінг між вкладками
-          setInterval(() => {
-            channel.postMessage({ type: 'ping', tabId });
-          }, 8000);
-
-          window.addEventListener('beforeunload', () => {
-            channel.postMessage({ type: 'leave', tabId });
-          });
+        const hasVisited = localStorage.getItem('safeguard_visited_v25');
+        if (!hasVisited) {
+          localStorage.setItem('safeguard_visited_v25', new Date().toISOString());
+          // Одноразовий запис унікального відвідувача (F5 не накручує)
+          fetch('https://abacus.jasoncameron.dev/hit/safeguard-ua-nikitacool24/visits').catch(() => {});
         }
       } catch (e) {}
-
-      // --- В. Глобальний Heartbeat до Cloudflare Worker (якщо налаштовано) ---
-      async function sendWorkerHeartbeat() {
-        try {
-          const statsUrl = `https://safeguard-ua-proxy.parhom74164.workers.dev/api/stats?id=${encodeURIComponent(clientId)}&tab=${encodeURIComponent(tabId)}${isNewSession ? '&new=1' : ''}`;
-          const res = await fetch(statsUrl, { cache: 'no-store' });
-          if (res.ok) {
-            const stats = await res.json();
-            if (stats && typeof stats.online === 'number') {
-              const mergedOnline = Math.max(stats.online, knownLocalTabs.size);
-              updateUI(mergedOnline, stats.views);
-            }
-          }
-        } catch (e) {
-          // Worker ще не оновлено або офлайн — використовуємо точну кількість локальних вкладок
-        }
-      }
-
-      sendWorkerHeartbeat();
-      setInterval(sendWorkerHeartbeat, 20000);
     }
 
     // Запуск системи: показуємо статус синхронізації і одразу робимо свіжий запит до API
-    initViewerCounter();
+    trackUniqueVisit();
     initMyRegionUI();
     const threatListEl = document.getElementById('threatListContainer');
     if (threatListEl) {
