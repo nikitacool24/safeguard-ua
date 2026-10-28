@@ -3053,7 +3053,8 @@
           if (res.ok) {
             const stats = await res.json();
             if (stats && typeof stats.online === 'number') {
-              updateUI(stats.online, stats.views);
+              const mergedOnline = Math.max(stats.online, knownLocalTabs.size);
+              updateUI(mergedOnline, stats.views);
             }
           }
         } catch (e) {
