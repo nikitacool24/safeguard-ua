@@ -15,9 +15,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-  
+  <!-- Leaflet CSS/JS підключаються динамічно з CDN-фолбеками (див. bootstrap у кінці скрипта) -->
+
   <!-- Шрифти: Inter для UI, JetBrains Mono для телеметрії -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1343,6 +1342,44 @@
       transition: opacity 0.3s ease;
     }
 
+    /* --- Екран помилки завантаження карти --- */
+    .boot-error {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(10, 12, 16, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .boot-error.is-visible { display: flex; }
+    .boot-error-card {
+      max-width: 420px;
+      padding: 26px 24px;
+      text-align: center;
+      background: rgba(20, 23, 29, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 26px 64px rgba(0, 0, 0, 0.62), var(--glass-highlight);
+      animation: fadeInUp 0.35s var(--ease-out-soft) both;
+    }
+    .boot-error-icon { font-size: 34px; margin-bottom: 10px; }
+    .boot-error-card h2 {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text-white);
+    }
+    .boot-error-card p {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
     /* ==========================================================================
        Доступність (a11y): видимий фокус і повага до зменшення анімації
        ========================================================================== */
@@ -1951,14 +1988,23 @@
     </button>
   </nav>
 
-  <!-- Leaflet.js CDN -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Екран помилки, якщо Leaflet не завантажився з жодного CDN -->
+  <div class="boot-error" id="bootError" role="alert" aria-live="assertive">
+    <div class="boot-error-card">
+      <div class="boot-error-icon">🛰️</div>
+      <h2>Карта не завантажилась</h2>
+      <p>Не вдалося підключитися до CDN з бібліотекою Leaflet. Перевірте інтернет-з'єднання, очистіть кеш браузера (Ctrl+Shift+Del) і спробуйте ще раз.</p>
+      <button class="btn-action" id="bootErrorRetry" type="button">↻ Спробувати ще раз</button>
+    </div>
+  </div>
 
   <script>
     /* ==========================================================================
        SafeGuard UA — Автономна клієнтська логіка вебсайту
-       Повна готовність до деплою на GitHub Pages + Cloudflare Worker
+       Застосунок запускається лише після успішного завантаження Leaflet —
+       збій CDN більше не валить сторінку помилкою «L is not defined».
        ========================================================================== */
+    function startSafeGuard() {
 
     // Джерела даних про тривоги.
     // ОСНОВНЕ — Cloudflare Worker: він сам додає токен зі своїх секретів,
@@ -3715,7 +3761,7 @@
             reg.update();
           }
         });
-        navigator.serviceWorker.register('./sw.js?v=4').catch((err) => {
+        navigator.serviceWorker.register('./sw.js?v=5').catch((err) => {
           console.warn('ServiceWorker registration error:', err);
         });
       });
@@ -4070,6 +4116,84 @@
     loadAllGeoData();
     syncAlerts(); // ПЕРШИЙ ЖЕ ЗАПИТ підтягує 100% реальні живі тривоги
     fetchRealNaturalHazards();
+    }
+
+    /* ==========================================================================
+       Bootstrap: Leaflet з трьох CDN + повтор із cache-busting.
+       Покриває ERR_CACHE_READ_FAILURE, блокування unpkg та офлайн-кеш SW.
+       ========================================================================== */
+    (function bootstrapLeaflet() {
+      const VERSION = '1.9.4';
+      const BASES = [
+        'https://unpkg.com/leaflet@' + VERSION + '/dist/',
+        'https://cdn.jsdelivr.net/npm/leaflet@' + VERSION + '/dist/',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/' + VERSION + '/'
+      ];
+      let attempt = 0;
+
+      const retryBtn = document.getElementById('bootErrorRetry');
+      if (retryBtn) retryBtn.addEventListener('click', function () { window.location.reload(); });
+
+      function showBootError() {
+        const el = document.getElementById('bootError');
+        if (el) el.classList.add('is-visible');
+      }
+
+      function startApp() {
+        if (typeof window.L === 'undefined') { tryNext(); return; }
+        try {
+          startSafeGuard();
+        } catch (err) {
+          console.error('[SafeGuard UA] Помилка запуску застосунку:', err);
+          showBootError();
+        }
+      }
+
+      function tryNext() {
+        if (typeof window.L !== 'undefined') { startApp(); return; }
+        if (attempt >= BASES.length * 2) { showBootError(); return; }
+
+        const base = BASES[attempt % BASES.length];
+        // перші три спроби — чисті URL (працює кеш SW), далі — обхід зламаного кеша браузера
+        const bust = attempt < BASES.length ? '' : '?v=' + Date.now();
+        attempt += 1;
+
+        const script = document.createElement('script');
+        script.src = base + 'leaflet.js' + bust;
+        script.onload = function () { startApp(); };
+        script.onerror = function () {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          tryNext();
+        };
+        document.body.appendChild(script);
+      }
+
+      function loadCss(then) {
+        let i = 0;
+        let finished = false;
+        const done = function () { if (finished) return; finished = true; then(); };
+
+        (function next() {
+          if (i >= BASES.length) { done(); return; }
+          const index = i;
+          i += 1;
+
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = BASES[index] + 'leaflet.css';
+          link.onload = done;
+          link.onerror = function () {
+            if (link.parentNode) link.parentNode.removeChild(link);
+            next();
+          };
+          document.head.appendChild(link);
+        })();
+
+        setTimeout(done, 3500); // не блокуємо запуск, якщо CDN «завис»
+      }
+
+      loadCss(tryNext);
+    })();
 
   </script>
 </body>
