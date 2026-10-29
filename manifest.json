@@ -1,18 +1,33 @@
 {
+  "id": "./",
   "name": "SafeGuard UA — Моніторинг тривог",
   "short_name": "SafeGuard UA",
   "description": "Система оперативного моніторингу рівнів тривог та небезпек України в режимі реального часу.",
-  "start_url": "./index.html",
+  "lang": "uk",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23121212'/><path d='M256 64s144 64 144 192v112l-144 80-144-80V256c0-128 144-192 144-192z' fill='none' stroke='%2300d4ff' stroke-width='32'/><circle cx='256' cy='280' r='54' fill='%23ff2a3b'/></svg>",
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

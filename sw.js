@@ -1,24 +1,27 @@
-// SafeGuard UA — Service Worker (Live Network First v3)
-const CACHE_NAME = 'safeguard-ua-v3';
+// SafeGuard UA — Service Worker (Live Network First v4)
+const CACHE_NAME = 'safeguard-ua-v4';
 
-// Кешуємо тільки важкі статичні полігони карти
-const STATIC_GEOJSON = [
+// Кешуємо тільки важкі статичні полігони карти та іконки PWA
+const PRECACHE_ASSETS = [
   './ukraine_regions.geojson',
   './ukraine_rayony.geojson',
   './ukraine_hromady.geojson',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_GEOJSON);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      // allSettled: відсутність одного файлу не зриває встановлення всього SW
+      .then((cache) => Promise.allSettled(PRECACHE_ASSETS.map((url) => cache.add(url))))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
-  // Видаляємо всі старі кеші (v1, v2)
+  // Видаляємо всі старі кеші (v1–v3)
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -42,7 +45,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. ДЛЯ САМОГО index.html ТА КОРЕНЯ: NETWORK FIRST (Завжди свіжа версія з мережі)
+  // 2. ДЛЯ САМОГО index.html ТА КОРЕНЯ: NETWORK FIRST (завжди свіжа версія)
   if (event.request.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname.endsWith('/safeguard-ua/')) {
     event.respondWith(
       fetch(event.request).then((networkResponse) => {
@@ -55,7 +58,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Для важких GeoJSON-файлів: Cache First
+  // 3. Для важких GeoJSON та іконок: Cache First
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
